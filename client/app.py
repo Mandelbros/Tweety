@@ -1,5 +1,5 @@
 import streamlit as st
-from services import register, login
+from services.auth_client import register, login
 
 st.title("Red Social - Autenticación")
 
