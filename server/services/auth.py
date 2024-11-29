@@ -14,7 +14,7 @@ class AuthService(AuthServiceServicer):
         users[request.username] = hashed_password
         print("succsesfully registered bro")    ### logging remove
         return RegisterResponse(success=True, message="User created successfully")
-    
+
     def Login(self, request, context):
         if request.username not in users:
             return LoginResponse(success=False, message="User does not exist")
@@ -26,7 +26,7 @@ class AuthService(AuthServiceServicer):
 def start_auth():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_AuthServiceServicer_to_server(AuthService(), server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port('127.0.0.1:50051')
     server.start
     print("Auth server started")    ### loggin remove
     server.wait_for_termination()

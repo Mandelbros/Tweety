@@ -1,18 +1,24 @@
 import streamlit as st
 from services.auth_client import register, login
 
-st.title("Red Social - Autenticación")
+st.title("Tweety - Auth")
 
-option = st.selectbox("Elige una opción", ["Sign Up", "Sign In"])
+option = st.selectbox("Choose an option", ["Register", "Login"])
 
 username = st.text_input("Username")
 password = st.text_input("Password", type="password")
 
-if option == "Sign Up":
-    if st.button("Sign Up"):
+if option == "Register":
+    if st.button("Register"):
         response = register(username, password)
-        st.write(response.message)
-elif option == "Sign In":
-    if st.button("Sign In"):
+        if response is not None:
+            st.write(response.message)
+        else:
+            st.error("Failed to connect to the authentication server.")
+elif option == "Login":
+    if st.button("Login"):
         response = login(username, password)
-        st.write(response.message)
+        if response is not None:
+            st.write(response.message)
+        else:
+            st.error("Failed to connect to the authentication server.")
