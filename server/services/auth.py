@@ -27,6 +27,6 @@ def start_auth():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_AuthServiceServicer_to_server(AuthService(), server)
     server.add_insecure_port('127.0.0.1:50051')
-    server.start
+    server.start()
     print("Auth server started")    ### loggin remove
     server.wait_for_termination()
