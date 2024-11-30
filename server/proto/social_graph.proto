@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+service SocialGraphService {
+  // RPC to follow a user
+  rpc Follow(FollowRequest) returns (FollowResponse);
+
+  // RPC to unfollow a user
+  rpc Unfollow(UnfollowRequest) returns (UnfollowResponse);
+
+  // RPC to get a list of followers
+  rpc GetFollowers(FollowersRequest) returns (FollowersResponse);
+
+  // RPC to get a list of users the user is following
+  rpc GetFollowing(FollowingRequest) returns (FollowingResponse);
+}
+
+message FollowRequest {
+  string follower_username = 1;
+  string following_username = 2;
+}
+
+message FollowResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message UnfollowRequest {
+  string follower_username = 1;
+  string following_username = 2;
+}
+
+message UnfollowResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message FollowersRequest {
+  string username = 1;
+}
+
+message FollowersResponse {
+  repeated string followers = 1; // List of usernames of followers
+}
+
+message FollowingRequest {
+  string username = 1;
+}
+
+message FollowingResponse {
+  repeated string following = 1; // List of usernames the user is following
+}
