@@ -3,6 +3,8 @@ from services.auth_client import register, login
 from services.social_graph_client import follow_user, unfollow_user, get_followers, get_following
 from services.message_client import post_message, get_messages
 
+MAX_MESSAGE_LENGTH = 300  # Define the maximum length for messages
+
 # Initialize session state variables
 if "logged_in_user" not in st.session_state:
     st.session_state.logged_in_user = None  # None means the user is not logged in
@@ -87,7 +89,11 @@ def relationships_view():
 # Message Posting View
 def message_view():
     st.title(f"Welcome, {st.session_state.logged_in_user}")
-    content = st.text_area("Write a message")
+    content = st.text_area(
+        "Write a message:",
+        max_chars=MAX_MESSAGE_LENGTH,
+        placeholder=f"Maximum {MAX_MESSAGE_LENGTH} characters allowed",
+    )
     
     if st.button("Post Message"):
         response = post_message(st.session_state.logged_in_user, content)
