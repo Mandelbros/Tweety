@@ -1,6 +1,7 @@
 import streamlit as st
 from services.auth_client import register, login
 from services.social_graph_client import follow_user, unfollow_user, get_followers, get_following
+from services.message_client import post_message, get_messages
 
 # Initialize session state variables
 if "logged_in_user" not in st.session_state:
@@ -79,9 +80,43 @@ def relationships_view():
     if st.button("Logout"):
         st.session_state.logged_in_user = None
         switch_view("login")
+    # Message Posting Button
+    if st.button("Manage Messages"):
+        switch_view("messages")
+
+# Message Posting View
+def message_view():
+    st.title(f"Welcome, {st.session_state.logged_in_user}")
+    content = st.text_area("Write a message")
+    
+    if st.button("Post Message"):
+        response = post_message(st.session_state.logged_in_user, content)
+        if response and response.success:
+            st.success(response.message)
+        else:
+            st.error("Failed to post the message.")
+
+    if st.button("Refresh Messages"):
+        response = get_messages()
+        if response:
+            st.write("Messages:")
+            for msg in response.messages:
+                st.write(f"**{msg.username}**: {msg.content} ({msg.timestamp})")
+        else:
+            st.error("Failed to load messages.")
+    
+    # Logout Button
+    if st.button("Logout"):
+        st.session_state.logged_in_user = None
+        switch_view("login")
+    # Manage Relationships Button
+    if st.button("Manage Relationships"):
+        switch_view("relationships")
 
 # Render the appropriate view based on session state
 if st.session_state.current_view == "login":
     login_register_view()
 elif st.session_state.current_view == "relationships":
     relationships_view()
+elif st.session_state.current_view == "messages":
+    message_view()

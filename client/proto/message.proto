@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+service MessageService {
+  rpc PostMessage (PostMessageRequest) returns (PostMessageResponse);
+  rpc GetMessages (GetMessagesRequest) returns (GetMessagesResponse);
+}
+
+message PostMessageRequest {
+  string username = 1;
+  string content = 2;
+}
+
+message PostMessageResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetMessagesRequest {
+  string username = 1; // Optional: Can be used to filter messages
+}
+
+message GetMessagesResponse {
+  repeated Message messages = 1;
+}
+
+message Message {
+  string username = 1;
+  string content = 2;
+  string timestamp = 3; // ISO 8601 format
+}
