@@ -3,23 +3,21 @@ import grpc
 from server.proto.message_pb2 import PostMessageResponse, GetMessagesResponse, Message
 from server.proto.message_pb2_grpc import MessageServiceServicer, add_MessageServiceServicer_to_server
 import datetime
-
-# In-memory storage for messages
-messages = []
+from server import shared_state 
 
 class MessageService(MessageServiceServicer):
     def PostMessage(self, request, context):
         # Add the message to the in-memory storage
         timestamp = datetime.datetime.utcnow().isoformat()
-        messages.append({"username": request.username, "content": request.content, "timestamp": timestamp})
+        shared_state.messages.append({"username": request.username, "content": request.content, "timestamp": timestamp})
         return PostMessageResponse(success=True, message="Message posted successfully!")
 
     def GetMessages(self, request, context):
         # Return all messages or filter by username if provided
         if request.username:
-            user_messages = [m for m in messages if m["username"] == request.username]
+            user_messages = [m for m in shared_state.messages if m["username"] == request.username]
         else:
-            user_messages = messages
+            user_messages = shared_state.messages
         
         return GetMessagesResponse(messages=[
             Message(username=m["username"], content=m["content"], timestamp=m["timestamp"]) for m in user_messages
@@ -30,5 +28,5 @@ def start_message_service():
     add_MessageServiceServicer_to_server(MessageService(), server)
     server.add_insecure_port('127.0.0.1:50053')
     server.start()
-    print("Message service started.")
+    print("Message service started or port 50053") ### loggin remove
     server.wait_for_termination()

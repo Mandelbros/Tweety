@@ -1,6 +1,7 @@
 from concurrent import futures
 import grpc
-from server.services.auth import users
+from server import shared_state
+# from server.services.auth import users
 from server.proto.social_graph_pb2 import (
     FollowResponse,
     UnfollowResponse,
@@ -13,30 +14,29 @@ from server.proto.social_graph_pb2_grpc import (
 )
 
 # In-memory storage for the social graph
-relationships = {
-    # Example structure: "user1": {"following": ["user2"], "followers": ["user3"]}
-}
-
+# relationships = {
+#     # Example structure: "user1": {"following": ["user2"], "followers": ["user3"]}
+# } 
 
 class SocialGraphService(SocialGraphServiceServicer):
     def Follow(self, request, context):
         follower = request.follower_username
         following = request.following_username
 
-        if following not in users:
+        if following not in shared_state.users:
             return FollowResponse(success=False, message="User to follow does not exist.")
         if follower == following:
             return FollowResponse(success=False, message="You cannot follow yourself.")
 
         # Add the following relationship
-        relationships.setdefault(follower, {"following": [], "followers": []})
-        relationships.setdefault(following, {"following": [], "followers": []})
+        shared_state.relationships.setdefault(follower, {"following": [], "followers": []})
+        shared_state.relationships.setdefault(following, {"following": [], "followers": []})
 
-        if following in relationships[follower]["following"]:
+        if following in shared_state.relationships[follower]["following"]:
             return FollowResponse(success=False, message="Already following this user.")
 
-        relationships[follower]["following"].append(following)
-        relationships[following]["followers"].append(follower)
+        shared_state.relationships[follower]["following"].append(following)
+        shared_state.relationships[following]["followers"].append(follower)
 
         return FollowResponse(success=True, message="Successfully followed the user.")
 
@@ -44,32 +44,32 @@ class SocialGraphService(SocialGraphServiceServicer):
         follower = request.follower_username
         following = request.following_username
 
-        if follower not in relationships or following not in relationships:
+        if follower not in shared_state.relationships or following not in shared_state.relationships:
             return UnfollowResponse(success=False, message="User does not exist.")
-        if following not in relationships[follower]["following"]:
+        if following not in shared_state.relationships[follower]["following"]:
             return UnfollowResponse(success=False, message="Not following this user.")
 
         # Remove the following relationship
-        relationships[follower]["following"].remove(following)
-        relationships[following]["followers"].remove(follower)
+        shared_state.relationships[follower]["following"].remove(following)
+        shared_state.relationships[following]["followers"].remove(follower)
 
         return UnfollowResponse(success=True, message="Successfully unfollowed the user.")
 
     def GetFollowers(self, request, context):
         username = request.username
 
-        if username not in relationships:
+        if username not in shared_state.relationships:
             return FollowersResponse(followers=[])
 
-        return FollowersResponse(followers=relationships[username]["followers"])
+        return FollowersResponse(followers=shared_state.relationships[username]["followers"])
 
     def GetFollowing(self, request, context):
         username = request.username
 
-        if username not in relationships:
+        if username not in shared_state.relationships:
             return FollowingResponse(following=[])
 
-        return FollowingResponse(following=relationships[username]["following"])
+        return FollowingResponse(following=shared_state.relationships[username]["following"])
 
 
 def start_social_graph_service():
@@ -77,5 +77,5 @@ def start_social_graph_service():
     add_SocialGraphServiceServicer_to_server(SocialGraphService(), server)
     server.add_insecure_port('127.0.0.1:50052')
     server.start()
-    print("Social Graph Service started on port 50052")
+    print("Social Graph Service started on port 50052") ### loggin remove
     server.wait_for_termination()
