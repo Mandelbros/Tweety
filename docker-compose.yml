@@ -1,0 +1,24 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    volumes:
+      - ./server/data.json:/app/server/data.json
+    ports:
+      - "50051:50051"
+      - "50052:50052"
+      - "50053:50053"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "8501:8501"
+    depends_on:
+      - server
+    environment:
+      - PYTHONUNBUFFERED=1

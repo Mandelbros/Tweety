@@ -1,17 +1,13 @@
-# Use a Python base image
-FROM python:3.10-slim
+# server/Dockerfile
+FROM python:3.12-slim
 
-# Set the working directory
 WORKDIR /app
 
-# Copy server code to the container
-COPY . .
+ENV PYTHONPATH="/app"
 
-# Install dependencies
+COPY server/requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the server port (adjust to your server's port)
-EXPOSE 8000
+COPY server/ /app/server/
 
-# Command to run the server
-CMD ["python", "server.py"]
+CMD ["python", "-m", "server.main"]

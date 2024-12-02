@@ -75,7 +75,7 @@ class SocialGraphService(SocialGraphServiceServicer):
 def start_social_graph_service():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_SocialGraphServiceServicer_to_server(SocialGraphService(), server)
-    server.add_insecure_port('127.0.0.1:50052')
+    server.add_insecure_port('0.0.0.0:50052')
     server.start()
     print("Social Graph Service started on port 50052") ### loggin remove
     server.wait_for_termination()
