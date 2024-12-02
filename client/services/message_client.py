@@ -1,5 +1,5 @@
 import grpc
-from proto.message_pb2 import PostMessageRequest, GetMessagesRequest
+from proto.message_pb2 import PostMessageRequest, GetMessagesRequest, RepostMessageRequest
 from proto.message_pb2_grpc import MessageServiceStub
 
 def post_message(username, content):
@@ -17,6 +17,16 @@ def get_messages(username=None):
         with grpc.insecure_channel('127.0.0.1:50053') as channel:
             stub = MessageServiceStub(channel)
             response = stub.GetMessages(GetMessagesRequest(username=username))
+            return response
+    except grpc.RpcError as e:
+        print(f"gRPC error: {e}")
+        return None
+
+def repost_message(username, original_message_id):
+    try:
+        with grpc.insecure_channel('127.0.0.1:50053') as channel:
+            stub = MessageServiceStub(channel)
+            response = stub.RepostMessage(RepostMessageRequest(username=username, original_message_index=original_message_id))
             return response
     except grpc.RpcError as e:
         print(f"gRPC error: {e}")

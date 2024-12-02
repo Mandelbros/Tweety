@@ -1,7 +1,7 @@
 import streamlit as st
 from services.auth_client import register, login
 from services.social_graph_client import follow_user, unfollow_user, get_followers, get_following
-from services.message_client import post_message, get_messages
+from services.message_client import post_message, get_messages, repost_message
 
 MAX_MESSAGE_LENGTH = 300  # Define the maximum length for messages
 
@@ -89,6 +89,8 @@ def relationships_view():
 # Message Posting View
 def message_view():
     st.title(f"Welcome, {st.session_state.logged_in_user}")
+    
+    # Text area for writing a new message
     content = st.text_area(
         "Write a message:",
         max_chars=MAX_MESSAGE_LENGTH,
@@ -105,16 +107,44 @@ def message_view():
     if st.button("Refresh Messages"):
         response = get_messages()
         if response:
-            st.write("Messages:")
-            for msg in response.messages:
-                st.write(f"**{msg.username}**: {msg.content} ({msg.timestamp})")
+            # Store the messages in session state to persist them across renders
+            st.session_state.messages = response.messages
         else:
             st.error("Failed to load messages.")
     
+    # Ensure session state has a list of messages
+    if "messages" in st.session_state:
+        st.write("Messages:")
+        for idx, msg in enumerate(st.session_state.messages):
+            if msg.is_repost:
+                st.write(f"**{msg.username}** [reposted from **{msg.original_username}**]: {msg.content} ({msg.timestamp})")
+            else:
+                st.write(f"**{msg.username}**: {msg.content} ({msg.timestamp})")
+            
+            # Create a unique key for each button
+            button_key = f"repost_button_{idx}"
+            
+            # If the button is clicked, update session state
+            if st.button("Repost", key=button_key):
+                st.session_state.repost_message_id = idx
+                st.session_state.repost_clicked = True
+
+    # Handle repost functionality after all buttons are rendered
+    if st.session_state.get("repost_clicked", False):
+        original_message_id = st.session_state.repost_message_id
+        repost_response = repost_message(st.session_state.logged_in_user, original_message_id)
+        if repost_response and repost_response.success:
+            st.success("Message reposted successfully!")
+        else:
+            st.error("Failed to repost the message.")
+        # Reset repost state after handling
+        st.session_state.repost_clicked = False
+
     # Logout Button
     if st.button("Logout"):
         st.session_state.logged_in_user = None
         switch_view("login")
+
     # Manage Relationships Button
     if st.button("Manage Relationships"):
         switch_view("relationships")

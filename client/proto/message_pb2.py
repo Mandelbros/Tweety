@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rmessage.proto\"7\n\x12PostMessageRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\"7\n\x13PostMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"&\n\x12GetMessagesRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"1\n\x13GetMessagesResponse\x12\x1a\n\x08messages\x18\x01 \x03(\x0b\x32\x08.Message\"?\n\x07Message\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\t2\x84\x01\n\x0eMessageService\x12\x38\n\x0bPostMessage\x12\x13.PostMessageRequest\x1a\x14.PostMessageResponse\x12\x38\n\x0bGetMessages\x12\x13.GetMessagesRequest\x1a\x14.GetMessagesResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rmessage.proto\"7\n\x12PostMessageRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\"7\n\x13PostMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"&\n\x12GetMessagesRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"1\n\x13GetMessagesResponse\x12\x1a\n\x08messages\x18\x01 \x03(\x0b\x32\x08.Message\"H\n\x14RepostMessageRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x1e\n\x16original_message_index\x18\x02 \x01(\x05\"9\n\x15RepostMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"m\n\x07Message\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\t\x12\x11\n\tis_repost\x18\x04 \x01(\x08\x12\x19\n\x11original_username\x18\x05 \x01(\t2\xc4\x01\n\x0eMessageService\x12\x38\n\x0bPostMessage\x12\x13.PostMessageRequest\x1a\x14.PostMessageResponse\x12\x38\n\x0bGetMessages\x12\x13.GetMessagesRequest\x1a\x14.GetMessagesResponse\x12>\n\rRepostMessage\x12\x15.RepostMessageRequest\x1a\x16.RepostMessageResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -39,8 +39,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GETMESSAGESREQUEST']._serialized_end=169
   _globals['_GETMESSAGESRESPONSE']._serialized_start=171
   _globals['_GETMESSAGESRESPONSE']._serialized_end=220
-  _globals['_MESSAGE']._serialized_start=222
-  _globals['_MESSAGE']._serialized_end=285
-  _globals['_MESSAGESERVICE']._serialized_start=288
-  _globals['_MESSAGESERVICE']._serialized_end=420
+  _globals['_REPOSTMESSAGEREQUEST']._serialized_start=222
+  _globals['_REPOSTMESSAGEREQUEST']._serialized_end=294
+  _globals['_REPOSTMESSAGERESPONSE']._serialized_start=296
+  _globals['_REPOSTMESSAGERESPONSE']._serialized_end=353
+  _globals['_MESSAGE']._serialized_start=355
+  _globals['_MESSAGE']._serialized_end=464
+  _globals['_MESSAGESERVICE']._serialized_start=467
+  _globals['_MESSAGESERVICE']._serialized_end=663
 # @@protoc_insertion_point(module_scope)
