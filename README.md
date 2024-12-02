@@ -8,4 +8,6 @@ python -m server.main
 Running client:
 streamlit run client/app.py
 
+Running with Docker:
+docker-compose up --build
 

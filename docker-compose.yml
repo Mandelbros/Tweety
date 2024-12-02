@@ -12,12 +12,34 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
 
-  client:
+  client1:
     build:
       context: .
       dockerfile: client/Dockerfile
     ports:
       - "8501:8501"
+    depends_on:
+      - server
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  client2:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "8502:8501"
+    depends_on:
+      - server
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  client3:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "8503:8501"
     depends_on:
       - server
     environment:
