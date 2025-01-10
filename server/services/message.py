@@ -56,7 +56,8 @@ class MessageService(MessageServiceServicer):
 def start_message_service():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_MessageServiceServicer_to_server(MessageService(), server)
-    server.add_insecure_port('0.0.0.0:50053')
+    # server.add_insecure_port('0.0.0.0:50053')
+    server.add_insecure_port('10.0.11.10:5003')
     server.start()
-    print("Message service started on port 50053")
+    print("Message service started on port 5003")
     server.wait_for_termination()

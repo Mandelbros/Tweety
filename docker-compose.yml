@@ -1,46 +1,94 @@
+networks:
+  clients:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.10.0/24
+  servers:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.11.0/24
+
 services:
+  router:
+    image: tweety-router
+    container_name: router
+    networks:
+      clients:
+        ipv4_address: 10.0.10.254
+      servers:
+        ipv4_address: 10.0.11.254
+    ports:
+      - "80:80"  # Ejemplo: expone el puerto 80 para el enrutador
+    privileged: true
+
   server:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
+    # build:
+      # context: .
+      # dockerfile: server/Dockerfile
+    image:
+      tweety-server
+    container_name: server
+    networks:
+      servers:
+        ipv4_address: 10.0.11.10
     volumes:
       - ./server/data.json:/app/server/data.json
     ports:
-      - "50051:50051"
-      - "50052:50052"
-      - "50053:50053"
+      - "5000:5001"
+      - "5001:5002"
+      - "5002:5003"
     environment:
       - PYTHONUNBUFFERED=1
 
   client1:
-    build:
-      context: .
-      dockerfile: client/Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: client/Dockerfile
+    image: tweety-client
+    container_name: client1
+    networks:
+      clients:
+        ipv4_address: 10.0.10.11
     ports:
       - "8501:8501"
     depends_on:
       - server
     environment:
       - PYTHONUNBUFFERED=1
+    privileged: true
 
   client2:
-    build:
-      context: .
-      dockerfile: client/Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: client/Dockerfile
+    image: tweety-client
+    container_name: client2
+    networks:
+      clients:
+        ipv4_address: 10.0.10.12
     ports:
       - "8502:8501"
     depends_on:
       - server
     environment:
       - PYTHONUNBUFFERED=1
+    privileged: true
 
   client3:
-    build:
-      context: .
-      dockerfile: client/Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: client/Dockerfile
+    image: tweety-client
+    container_name: client3
+    networks:
+      clients:
+        ipv4_address: 10.0.10.13
     ports:
       - "8503:8501"
     depends_on:
       - server
     environment:
       - PYTHONUNBUFFERED=1
+    privileged: true
