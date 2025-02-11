@@ -7,13 +7,21 @@ from server.utils import save_data, load_data
 import time
 import signal
 import sys
+import socket
+from server.chord.node import Node
+from server.repository.auth import AuthRepository
 
 def run_services():
+    ip = socket.gethostbyname(socket.gethostname())
+    node = Node(ip, 10000)
+
     # Load data when the server starts
-    load_data()
+    load_data()     # :skull:
+
+    auth_repository = AuthRepository(node) 
 
     # Start the authentication service
-    auth_thread = threading.Thread(target=start_auth, daemon=True)
+    auth_thread = threading.Thread(target=start_auth, args=(auth_repository), daemon=True)
     auth_thread.start()
 
     # Start the social graph service
