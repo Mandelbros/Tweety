@@ -1,5 +1,9 @@
 syntax = "proto3";
 
+package tweety;
+
+import "server/proto/models.proto";
+
 service MessageService {
   rpc PostMessage (PostMessageRequest) returns (PostMessageResponse);
   rpc GetMessages (GetMessagesRequest) returns (GetMessagesResponse);
@@ -34,10 +38,4 @@ message RepostMessageResponse {
   string message = 2;
 }
 
-message Message {
-  string username = 1;
-  string content = 2;
-  string timestamp = 3; // ISO 8601 format
-  bool is_repost = 4; // Indicates whether the message is a repost
-  string original_username = 5; // Original poster's username, if a repost
-}
+

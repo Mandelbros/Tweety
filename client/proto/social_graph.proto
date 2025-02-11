@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package tweety;
+
 service SocialGraphService {
   // RPC to follow a user
   rpc Follow(FollowRequest) returns (FollowResponse);

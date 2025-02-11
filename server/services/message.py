@@ -1,20 +1,23 @@
 from concurrent import futures
 import grpc
-from server.proto.message_pb2 import PostMessageResponse, GetMessagesResponse, RepostMessageResponse, Message
+from server.proto.models_pb2 import Message
+from server.proto.message_pb2 import PostMessageResponse, GetMessagesResponse, RepostMessageResponse
 from server.proto.message_pb2_grpc import MessageServiceServicer, add_MessageServiceServicer_to_server
-import datetime
+import datetime, time
 from server import shared_state
 
 class MessageService(MessageServiceServicer):
     def PostMessage(self, request, context):
         # Add the message to the in-memory storage
         timestamp = datetime.datetime.utcnow().isoformat()
+        message_id = str(time.time_ns())
         shared_state.messages.append({
+            "message_id": message_id,
             "username": request.username,
             "content": request.content,
             "timestamp": timestamp,
             "is_repost": False,
-            "original_username": None,
+            "original_message_id": None,
         })
         return PostMessageResponse(success=True, message="Message posted successfully!")
 
@@ -27,11 +30,12 @@ class MessageService(MessageServiceServicer):
 
         return GetMessagesResponse(messages=[
             Message(
+                message_id=m["message_id"],
                 username=m["username"],
                 content=m["content"],
                 timestamp=m["timestamp"],
                 is_repost=m["is_repost"],
-                original_username=m["original_username"] or ""
+                original_message_id=m["original_message_id"] or ""
             ) for m in user_messages
         ])
 
@@ -44,12 +48,15 @@ class MessageService(MessageServiceServicer):
         
         # Add the reposted message to the shared state
         timestamp = datetime.datetime.utcnow().isoformat()
+        message_id = str(time.time_ns())
+
         shared_state.messages.append({
+            "message_id": message_id,
             "username": request.username,
             "content": original_message["content"],
             "timestamp": timestamp,
             "is_repost": True,
-            "original_username": original_message["username"],
+            "original_message_id": original_message["message_id"],
         })
         return RepostMessageResponse(success=True, message="Message reposted successfully!")
 

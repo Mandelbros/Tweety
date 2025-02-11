@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from proto import message_pb2 as message__pb2
+from server.proto import message_pb2 as server_dot_proto_dot_message__pb2
 
 GRPC_GENERATED_VERSION = '1.68.0'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in message_pb2_grpc.py depends on'
+        + f' but the generated code in server/proto/message_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -35,19 +35,19 @@ class MessageServiceStub(object):
             channel: A grpc.Channel.
         """
         self.PostMessage = channel.unary_unary(
-                '/MessageService/PostMessage',
-                request_serializer=message__pb2.PostMessageRequest.SerializeToString,
-                response_deserializer=message__pb2.PostMessageResponse.FromString,
+                '/tweety.MessageService/PostMessage',
+                request_serializer=server_dot_proto_dot_message__pb2.PostMessageRequest.SerializeToString,
+                response_deserializer=server_dot_proto_dot_message__pb2.PostMessageResponse.FromString,
                 _registered_method=True)
         self.GetMessages = channel.unary_unary(
-                '/MessageService/GetMessages',
-                request_serializer=message__pb2.GetMessagesRequest.SerializeToString,
-                response_deserializer=message__pb2.GetMessagesResponse.FromString,
+                '/tweety.MessageService/GetMessages',
+                request_serializer=server_dot_proto_dot_message__pb2.GetMessagesRequest.SerializeToString,
+                response_deserializer=server_dot_proto_dot_message__pb2.GetMessagesResponse.FromString,
                 _registered_method=True)
         self.RepostMessage = channel.unary_unary(
-                '/MessageService/RepostMessage',
-                request_serializer=message__pb2.RepostMessageRequest.SerializeToString,
-                response_deserializer=message__pb2.RepostMessageResponse.FromString,
+                '/tweety.MessageService/RepostMessage',
+                request_serializer=server_dot_proto_dot_message__pb2.RepostMessageRequest.SerializeToString,
+                response_deserializer=server_dot_proto_dot_message__pb2.RepostMessageResponse.FromString,
                 _registered_method=True)
 
 
@@ -77,24 +77,24 @@ def add_MessageServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'PostMessage': grpc.unary_unary_rpc_method_handler(
                     servicer.PostMessage,
-                    request_deserializer=message__pb2.PostMessageRequest.FromString,
-                    response_serializer=message__pb2.PostMessageResponse.SerializeToString,
+                    request_deserializer=server_dot_proto_dot_message__pb2.PostMessageRequest.FromString,
+                    response_serializer=server_dot_proto_dot_message__pb2.PostMessageResponse.SerializeToString,
             ),
             'GetMessages': grpc.unary_unary_rpc_method_handler(
                     servicer.GetMessages,
-                    request_deserializer=message__pb2.GetMessagesRequest.FromString,
-                    response_serializer=message__pb2.GetMessagesResponse.SerializeToString,
+                    request_deserializer=server_dot_proto_dot_message__pb2.GetMessagesRequest.FromString,
+                    response_serializer=server_dot_proto_dot_message__pb2.GetMessagesResponse.SerializeToString,
             ),
             'RepostMessage': grpc.unary_unary_rpc_method_handler(
                     servicer.RepostMessage,
-                    request_deserializer=message__pb2.RepostMessageRequest.FromString,
-                    response_serializer=message__pb2.RepostMessageResponse.SerializeToString,
+                    request_deserializer=server_dot_proto_dot_message__pb2.RepostMessageRequest.FromString,
+                    response_serializer=server_dot_proto_dot_message__pb2.RepostMessageResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'MessageService', rpc_method_handlers)
+            'tweety.MessageService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('MessageService', rpc_method_handlers)
+    server.add_registered_method_handlers('tweety.MessageService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
@@ -115,9 +115,9 @@ class MessageService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/MessageService/PostMessage',
-            message__pb2.PostMessageRequest.SerializeToString,
-            message__pb2.PostMessageResponse.FromString,
+            '/tweety.MessageService/PostMessage',
+            server_dot_proto_dot_message__pb2.PostMessageRequest.SerializeToString,
+            server_dot_proto_dot_message__pb2.PostMessageResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -142,9 +142,9 @@ class MessageService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/MessageService/GetMessages',
-            message__pb2.GetMessagesRequest.SerializeToString,
-            message__pb2.GetMessagesResponse.FromString,
+            '/tweety.MessageService/GetMessages',
+            server_dot_proto_dot_message__pb2.GetMessagesRequest.SerializeToString,
+            server_dot_proto_dot_message__pb2.GetMessagesResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -169,9 +169,9 @@ class MessageService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/MessageService/RepostMessage',
-            message__pb2.RepostMessageRequest.SerializeToString,
-            message__pb2.RepostMessageResponse.FromString,
+            '/tweety.MessageService/RepostMessage',
+            server_dot_proto_dot_message__pb2.RepostMessageRequest.SerializeToString,
+            server_dot_proto_dot_message__pb2.RepostMessageResponse.FromString,
             options,
             channel_credentials,
             insecure,
