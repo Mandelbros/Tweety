@@ -1,0 +1,11 @@
+# Dockerfile.base
+FROM python:3.12-alpine
+ 
+WORKDIR /app
+ 
+ENV PYTHONPATH="/app"
+
+# Copiamos el archivo de dependencias
+COPY server/requirements.txt requirements.txt
+
+RUN pip install -r requirements.txt
