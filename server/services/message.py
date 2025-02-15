@@ -1,70 +1,85 @@
-from concurrent import futures
+import logging
 import grpc
+from concurrent import futures
+import time 
 from server.proto.models_pb2 import Message
 from server.proto.message_pb2 import PostMessageResponse, GetMessagesResponse, RepostMessageResponse
 from server.proto.message_pb2_grpc import MessageServiceServicer, add_MessageServiceServicer_to_server
-import datetime, time
-from server import shared_state
+from server.repository.message import MessageRepository
+from server.repository.auth import AuthRepository
 
 class MessageService(MessageServiceServicer):
+    def __init__(self, auth_repository, message_repository):
+        self.auth_repository = auth_repository
+        self.message_repository = message_repository
+
     def PostMessage(self, request, context):
-        # Add the message to the in-memory storage
-        timestamp = datetime.datetime.utcnow().isoformat()
+        user_id = request.user_id
+
+        content = request.content
+
         message_id = str(time.time_ns())
-        shared_state.messages.append({
-            "message_id": message_id,
-            "username": request.username,
-            "content": request.content,
-            "timestamp": timestamp,
-            "is_repost": False,
-            "original_message_id": None,
-        })
+        message = Message(message_id = message_id, user_id = user_id, content = content, timestamp = int(time.time()))
+
+        err = self.message_repository.save_message(message)
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, "Failed to save post")
+
+        err = self.message_repository.add_to_messages_list(message_id, user_id)
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, "Failed to add post to user list")
+
         return PostMessageResponse(success=True, message="Message posted successfully!")
 
-    def GetMessages(self, request, context):
-        # Return all messages or filter by username if provided
-        if request.username:
-            user_messages = [m for m in shared_state.messages if m["username"] == request.username]
-        else:
-            user_messages = shared_state.messages
-
-        return GetMessagesResponse(messages=[
-            Message(
-                message_id=m["message_id"],
-                username=m["username"],
-                content=m["content"],
-                timestamp=m["timestamp"],
-                is_repost=m["is_repost"],
-                original_message_id=m["original_message_id"] or ""
-            ) for m in user_messages
-        ])
-
     def RepostMessage(self, request, context):
-        # Validate the original message index
-        if request.original_message_index < 0 or request.original_message_index >= len(shared_state.messages):
-            return RepostMessageResponse(success=False, message="Invalid message index.")
+        user_id = request.user_id
         
-        original_message = shared_state.messages[request.original_message_index]
-        
-        # Add the reposted message to the shared state
-        timestamp = datetime.datetime.utcnow().isoformat()
-        message_id = str(time.time_ns())
+        messages, err = self.message_repository.load_messages_list(user_id)
 
-        shared_state.messages.append({
-            "message_id": message_id,
-            "username": request.username,
-            "content": original_message["content"],
-            "timestamp": timestamp,
-            "is_repost": True,
-            "original_message_id": original_message["message_id"],
-        })
+        for message in messages:
+            if message.original_message_id == request.original_message_id:
+                context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User already reposted this post")
+            if message.message_id == request.original_message_id:  
+                context.abort(grpc.StatusCode.INVALID_ARGUMENT, "This post is yours")
+
+        original_message, err = self.message_repository.load_message(request.original_message_id)
+        if err:
+            context.abort(grpc.StatusCode.NOT_FOUND, "Original post not found")
+
+        message_id = str(time.time_ns())
+        message = Message(message_id = message_id, user_id = user_id, content = original_message.content, timestamp = int(time.time()), original_post_id = original_message.message_id)
+
+        err = self.message_repository.save_message(message)
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, "Failed to save repost")
+
+        err = self.message_repository.add_to_messages_list(message_id, user_id)
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, "Failed to add repost to user list")
+
         return RepostMessageResponse(success=True, message="Message reposted successfully!")
 
-def start_message_service():
+    def GetMessages(self, request, context):
+        user_id = request.user_id
+
+        if not self.auth_repository.load_user(user_id):
+            context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
+
+        messages, err = self.message_repository.load_messages_list(user_id)
+        
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, "Failed to load user posts")
+
+        return GetMessagesResponse(messages=messages)
+
+def start_message_service(message_repository: MessageRepository, auth_repository: AuthRepository):
+    logging.info("Post service started")
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    add_MessageServiceServicer_to_server(MessageService(), server)
+    add_MessageServiceServicer_to_server(MessageService(message_repository,auth_repository), server)
+
     # server.add_insecure_port('0.0.0.0:50053')
     server.add_insecure_port('10.0.11.10:5003')
     server.start()
-    print("Message service started on port 5003")
+    # print("Message service started on port 5003")
     server.wait_for_termination()

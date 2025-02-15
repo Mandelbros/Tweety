@@ -20,6 +20,6 @@ message UserFollows {
     repeated string following_users_ids = 1;
 }
 
-message UserPosts {
+message UserMessages {
     repeated string messages_ids = 1;
 }

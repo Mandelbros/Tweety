@@ -1,18 +1,14 @@
 import base64 
 import logging
 import grpc
-
 from chord.node import Node
 
 logging.basicConfig(level=logging.DEBUG)
 
-def is_empty(data: str):
-    return data == ''
-
 def exists(node: Node, path):
     logging.debug(f"Checking if file exists: {path}")
 
-    exists = not is_empty(node.get_key(path))
+    exists = node.get_key(path) != ''
     if not exists:
         logging.debug("File doesn't exist")
         return False, None
@@ -41,7 +37,7 @@ def load(node: Node, path, obj):
     logging.debug(f"Loading file: {path}")
 
     data_str = node.get_key(path)
-    if is_empty(data_str):
+    if data_str == '':
         logging.error(f"Error getting file")
         return None, grpc.StatusCode.NOT_FOUND
 
