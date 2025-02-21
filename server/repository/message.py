@@ -30,7 +30,7 @@ class MessageRepository:
         return message, None
 
     def add_to_messages_list(self, message_id, username):
-        path = os.path.join("Auth", username.lower(), "Messages")
+        path = os.path.join("User", username.lower(), "Messages")
         user_messages, err = load(self.node, path, UserMessages())
         list = []
 
@@ -46,7 +46,7 @@ class MessageRepository:
         return None
 
     def load_messages_list(self, username):
-        path = os.path.join("Auth", username.lower(), "Messages")
+        path = os.path.join("User", username.lower(), "Messages")
         user_messages, err = load(self.node, path, UserMessages())
         list = []
 

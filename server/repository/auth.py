@@ -9,11 +9,11 @@ class AuthRepository:
         self.node = node
 
     def exists_user(self, username: str):
-        path = os.path.join("Auth", username.lower())
+        path = os.path.join("User", username.lower())
         return exists(self.node, path)
 
     def load_user(self, username: str):
-        path = os.path.join("Auth", username.lower())
+        path = os.path.join("User", username.lower())
         user, err = load(self.node, path, User())
 
         if err == grpc.StatusCode.NOT_FOUND:
@@ -24,7 +24,7 @@ class AuthRepository:
         return user, None
 
     def save_user(self, user):
-        path = os.path.join("Auth", user.username.lower())
+        path = os.path.join("User", user.username.lower())
         err = save(self.node, user, path)
 
         if err:

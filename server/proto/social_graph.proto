@@ -17,8 +17,8 @@ service SocialGraphService {
 }
 
 message FollowRequest {
-  string follower_username = 1;
-  string following_username = 2;
+  string follower_id = 1;
+  string followed_id = 2;
 }
 
 message FollowResponse {
@@ -27,8 +27,8 @@ message FollowResponse {
 }
 
 message UnfollowRequest {
-  string follower_username = 1;
-  string following_username = 2;
+  string follower_id = 1;
+  string followed_id = 2;
 }
 
 message UnfollowResponse {
@@ -44,10 +44,10 @@ message FollowersResponse {
   repeated string followers = 1; // List of usernames of followers
 }
 
-message FollowingRequest {
-  string username = 1;
+message GetFollowingRequest {
+  string user_id = 1;
 }
 
-message FollowingResponse {
-  repeated string following = 1; // List of usernames the user is following
+message GetFollowingResponse {
+  repeated string following_list = 1; // List of usernames the user is following
 }

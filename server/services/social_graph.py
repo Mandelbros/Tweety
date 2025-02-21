@@ -1,82 +1,90 @@
-from concurrent import futures
+import logging
 import grpc
-from server import shared_state
-# from server.services.auth import users
-from server.proto.social_graph_pb2 import (
-    FollowResponse,
-    UnfollowResponse,
-    FollowersResponse,
-    FollowingResponse,
-)
-from server.proto.social_graph_pb2_grpc import (
-    SocialGraphServiceServicer,
-    add_SocialGraphServiceServicer_to_server,
-)
-
-# In-memory storage for the social graph
-# relationships = {
-#     # Example structure: "user1": {"following": ["user2"], "followers": ["user3"]}
-# } 
+from concurrent import futures
+from server.proto.social_graph_pb2_grpc import SocialGraphServiceServicer, add_SocialGraphServiceServicer_to_server
+from server.proto.social_graph_pb2 import FollowResponse, UnfollowResponse, GetFollowingResponse 
+from server.repository.auth import AuthRepository
+from server.repository.social_graph import SocialGraphRepository
 
 class SocialGraphService(SocialGraphServiceServicer):
+    def __init__(self, social_graph_repository, auth_repository):
+        self.social_graph_repository = social_graph_repository
+        self.auth_repository = auth_repository
+
     def Follow(self, request, context):
-        follower = request.follower_username
-        following = request.following_username
+        username = request.follower_id
+        followed_username  = request.followed_id
 
-        if following not in shared_state.users:
-            return FollowResponse(success=False, message="User to follow does not exist.")
-        if follower == following:
-            return FollowResponse(success=False, message="You cannot follow yourself.")
+        if username == followed_username:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Cannot follow yourself")
 
-        # Add the following relationship
-        shared_state.relationships.setdefault(follower, {"following": [], "followers": []})
-        shared_state.relationships.setdefault(following, {"following": [], "followers": []})
+        if not self.auth_repository.exists_user(username):
+            context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
 
-        if following in shared_state.relationships[follower]["following"]:
-            return FollowResponse(success=False, message="Already following this user.")
+        if not self.auth_repository.exists_user(followed_username):
+            context.abort(grpc.StatusCode.NOT_FOUND, "Target user not found")
 
-        shared_state.relationships[follower]["following"].append(following)
-        shared_state.relationships[following]["followers"].append(follower)
+        ok, err = self.social_graph_repository.add_to_following_list(username, followed_username)
 
-        return FollowResponse(success=True, message="Successfully followed the user.")
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to follow user: {err}")
+
+        if not ok:
+            context.abort(grpc.StatusCode.ALREADY_EXISTS, f"Already following user {followed_username}")
+
+        return FollowResponse()
 
     def Unfollow(self, request, context):
-        follower = request.follower_username
-        following = request.following_username
+        username = request.user_id
+        unfollowed_username = request.unfollowed_id
 
-        if follower not in shared_state.relationships or following not in shared_state.relationships:
-            return UnfollowResponse(success=False, message="User does not exist.")
-        if following not in shared_state.relationships[follower]["following"]:
-            return UnfollowResponse(success=False, message="Not following this user.")
+        if username == unfollowed_username:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Cannot unfollow yourself")
 
-        # Remove the following relationship
-        shared_state.relationships[follower]["following"].remove(following)
-        shared_state.relationships[following]["followers"].remove(follower)
+        if not self.auth_repository.exists_user(username):
+            context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
 
-        return UnfollowResponse(success=True, message="Successfully unfollowed the user.")
+        if not self.auth_repository.exists_user(unfollowed_username):
+            context.abort(grpc.StatusCode.NOT_FOUND, "Target user not found")
 
-    def GetFollowers(self, request, context):
-        username = request.username
+        ok, err = self.social_graph_repository.remove_from_following_list(username, unfollowed_username)
 
-        if username not in shared_state.relationships:
-            return FollowersResponse(followers=[])
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to unfollow user: {err}")
 
-        return FollowersResponse(followers=shared_state.relationships[username]["followers"])
+        if not ok:
+            context.abort(grpc.StatusCode.NOT_FOUND, f"Not following user {unfollowed_username}")
+
+        return UnfollowResponse()
 
     def GetFollowing(self, request, context):
-        username = request.username
+        username = request.user_id
 
-        if username not in shared_state.relationships:
-            return FollowingResponse(following=[])
+        if not self.auth_repository.exists_user(username):
+            context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
 
-        return FollowingResponse(following=shared_state.relationships[username]["following"])
+        list, err = self.social_graph_repository.load_following_list(username)
+
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to load following list: {err}")
+
+        return GetFollowingResponse(following_list=list)
+
+    # def GetFollowers(self, request, context):
+    #     username = request.username
+
+    #     if username not in shared_state.relationships:
+    #         return FollowersResponse(followers=[])
+
+    #     return FollowersResponse(followers=shared_state.relationships[username]["followers"])
 
 
-def start_social_graph_service():
+def start_social_graph_service(social_graph_repository:SocialGraphRepository, auth_repository:AuthRepository):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    add_SocialGraphServiceServicer_to_server(SocialGraphService(), server)
+    add_SocialGraphServiceServicer_to_server(SocialGraphService(social_graph_repository, auth_repository), server)
     # server.add_insecure_port('0.0.0.0:50052')
     server.add_insecure_port('10.0.11.10:5002')
     server.start()
-    print("Social Graph Service started on port 5002") ### loggin remove
+    logging.info("Social Graph Service started on port 5002")
     server.wait_for_termination()
+
