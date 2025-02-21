@@ -16,10 +16,14 @@ message User {
     string password_hash = 2;
 }
 
-message UserFollows {
-    repeated string followed_user_ids = 1;
-}
-
 message UserMessages {
     repeated string message_ids = 1;
+}
+
+message UserFollowing {
+    repeated string following_list = 1;
+}
+
+message UserFollowers {
+    repeated string followers_list = 1;
 }

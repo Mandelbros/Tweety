@@ -2,12 +2,12 @@ import logging
 import grpc
 from concurrent import futures
 from server.proto.social_graph_pb2_grpc import SocialGraphServiceServicer, add_SocialGraphServiceServicer_to_server
-from server.proto.social_graph_pb2 import FollowResponse, UnfollowResponse, GetFollowingResponse 
+from server.proto.social_graph_pb2 import FollowResponse, UnfollowResponse, GetFollowingResponse, GetFollowersResponse 
 from server.repository.auth import AuthRepository
 from server.repository.social_graph import SocialGraphRepository
 
 class SocialGraphService(SocialGraphServiceServicer):
-    def __init__(self, social_graph_repository, auth_repository):
+    def __init__(self, social_graph_repository:SocialGraphRepository, auth_repository:AuthRepository):
         self.social_graph_repository = social_graph_repository
         self.auth_repository = auth_repository
 
@@ -32,6 +32,14 @@ class SocialGraphService(SocialGraphServiceServicer):
         if not ok:
             context.abort(grpc.StatusCode.ALREADY_EXISTS, f"Already following user {followed_username}")
 
+        ok, err = self.social_graph_repository.add_to_followers_list(followed_username, username)
+
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to follow user: {err}")
+
+        if not ok:
+            context.abort(grpc.StatusCode.ALREADY_EXISTS, f"User already a follower {username}")
+
         return FollowResponse()
 
     def Unfollow(self, request, context):
@@ -55,6 +63,14 @@ class SocialGraphService(SocialGraphServiceServicer):
         if not ok:
             context.abort(grpc.StatusCode.NOT_FOUND, f"Not following user {unfollowed_username}")
 
+        ok, err = self.social_graph_repository.remove_from_followers_list(unfollowed_username, username)
+
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to unfollow user: {err}")
+
+        if not ok:
+            context.abort(grpc.StatusCode.NOT_FOUND, f"Not a follower {username}")
+
         return UnfollowResponse()
 
     def GetFollowing(self, request, context):
@@ -70,13 +86,18 @@ class SocialGraphService(SocialGraphServiceServicer):
 
         return GetFollowingResponse(following_list=list)
 
-    # def GetFollowers(self, request, context):
-    #     username = request.username
+    def GetFollowers(self, request, context):
+        username = request.user_id
 
-    #     if username not in shared_state.relationships:
-    #         return FollowersResponse(followers=[])
+        if not self.auth_repository.exists_user(username):
+            context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
 
-    #     return FollowersResponse(followers=shared_state.relationships[username]["followers"])
+        list, err = self.social_graph_repository.load_followers_list(username)
+
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to load followers list: {err}")
+
+        return GetFollowersResponse(followers_list=list)
 
 
 def start_social_graph_service(social_graph_repository:SocialGraphRepository, auth_repository:AuthRepository):
