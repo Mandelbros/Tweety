@@ -2,8 +2,8 @@ import grpc
 from proto.social_graph_pb2 import (
     FollowRequest,
     UnfollowRequest,
-    FollowersRequest,
-    FollowingRequest,
+    GetFollowersRequest,
+    GetFollowingRequest,
 )
 from proto.social_graph_pb2_grpc import SocialGraphServiceStub
 
@@ -31,7 +31,7 @@ def get_followers(username):
     # with grpc.insecure_channel('tweety-server-1:50052') as channel:
     with grpc.insecure_channel('10.0.11.10:5002') as channel:
         stub = SocialGraphServiceStub(channel)
-        response = stub.GetFollowers(FollowersRequest(username=username))
+        response = stub.GetFollowers(GetFollowersRequest(username=username))
         return response
 
 
@@ -40,5 +40,5 @@ def get_following(username):
     # with grpc.insecure_channel('tweety-server-1:50052') as channel:
     with grpc.insecure_channel('10.0.11.10:5002') as channel:
         stub = SocialGraphServiceStub(channel)
-        response = stub.GetFollowing(FollowingRequest(username=username))
+        response = stub.GetFollowing(GetFollowingRequest(username=username))
         return response

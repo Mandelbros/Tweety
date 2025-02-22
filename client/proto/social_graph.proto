@@ -3,22 +3,18 @@ syntax = "proto3";
 package tweety;
 
 service SocialGraphService {
-  // RPC to follow a user
-  rpc Follow(FollowRequest) returns (FollowResponse);
+  rpc Follow(FollowRequest) returns (FollowResponse);   // RPC to follow a user
 
-  // RPC to unfollow a user
-  rpc Unfollow(UnfollowRequest) returns (UnfollowResponse);
+  rpc Unfollow(UnfollowRequest) returns (UnfollowResponse);   // RPC to unfollow a user
 
-  // RPC to get a list of followers
-  rpc GetFollowers(FollowersRequest) returns (FollowersResponse);
-
-  // RPC to get a list of users the user is following
-  rpc GetFollowing(FollowingRequest) returns (FollowingResponse);
+  rpc GetFollowing(GetFollowingRequest) returns (GetFollowingResponse);   // RPC to get a list of users the user is following
+  
+  rpc GetFollowers(GetFollowersRequest) returns (GetFollowersResponse);   // RPC to get a list of followers of a given user
 }
 
 message FollowRequest {
-  string follower_username = 1;
-  string following_username = 2;
+  string follower_id = 1;
+  string followed_id = 2;
 }
 
 message FollowResponse {
@@ -27,8 +23,8 @@ message FollowResponse {
 }
 
 message UnfollowRequest {
-  string follower_username = 1;
-  string following_username = 2;
+  string follower_id = 1;
+  string followed_id = 2;
 }
 
 message UnfollowResponse {
@@ -36,18 +32,18 @@ message UnfollowResponse {
   string message = 2;
 }
 
-message FollowersRequest {
-  string username = 1;
+message GetFollowingRequest {
+  string user_id = 1;
 }
 
-message FollowersResponse {
-  repeated string followers = 1; // List of usernames of followers
+message GetFollowingResponse {
+  repeated string following_list = 1; // List of usernames the user is following
 }
 
-message FollowingRequest {
-  string username = 1;
+message GetFollowersRequest {
+  string user_id = 1;
 }
 
-message FollowingResponse {
-  repeated string following = 1; // List of usernames the user is following
+message GetFollowersResponse {
+  repeated string followers_list = 1; // List of usernames of followers
 }

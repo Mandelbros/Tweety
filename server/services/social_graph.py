@@ -100,11 +100,10 @@ class SocialGraphService(SocialGraphServiceServicer):
         return GetFollowersResponse(followers_list=list)
 
 
-def start_social_graph_service(social_graph_repository:SocialGraphRepository, auth_repository:AuthRepository):
+def start_social_graph_service(address, social_graph_repository:SocialGraphRepository, auth_repository:AuthRepository):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_SocialGraphServiceServicer_to_server(SocialGraphService(social_graph_repository, auth_repository), server)
-    # server.add_insecure_port('0.0.0.0:50052')
-    server.add_insecure_port('10.0.11.10:5002')
+    server.add_insecure_port(address)
     server.start()
     logging.info("Social Graph Service started on port 5002")
     server.wait_for_termination()

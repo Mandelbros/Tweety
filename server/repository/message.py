@@ -1,7 +1,6 @@
-
 import os
 import grpc
-from chord.node import Node 
+from server.chord.node import Node 
 from server.repository.utils import save, load
 from server.proto.models_pb2 import Message, UserMessages
 

@@ -9,9 +9,22 @@ from server.repository.message import MessageRepository
 from server.repository.auth import AuthRepository
 
 class MessageService(MessageServiceServicer):
-    def __init__(self, auth_repository, message_repository):
-        self.auth_repository = auth_repository
+    def __init__(self, message_repository:MessageRepository, auth_repository: AuthRepository):
         self.message_repository = message_repository
+        self.auth_repository = auth_repository
+
+    def GetMessages(self, request, context):
+        user_id = request.user_id
+
+        if not self.auth_repository.load_user(user_id):
+            context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
+
+        messages, err = self.message_repository.load_messages_list(user_id)
+        
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, "Failed to load user posts")
+
+        return GetMessagesResponse(messages=messages)
 
     def PostMessage(self, request, context):
         user_id = request.user_id
@@ -59,27 +72,15 @@ class MessageService(MessageServiceServicer):
 
         return RepostMessageResponse(success=True, message="Message reposted successfully!")
 
-    def GetMessages(self, request, context):
-        user_id = request.user_id
+    # def GetMessage(self, request, context):
+    # def DeleteMessage(self, request, context):
 
-        if not self.auth_repository.load_user(user_id):
-            context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
-
-        messages, err = self.message_repository.load_messages_list(user_id)
-        
-        if err:
-            context.abort(grpc.StatusCode.INTERNAL, "Failed to load user posts")
-
-        return GetMessagesResponse(messages=messages)
-
-def start_message_service(message_repository: MessageRepository, auth_repository: AuthRepository):
+def start_message_service(address, message_repository: MessageRepository, auth_repository: AuthRepository):
     logging.info("Post service started")
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_MessageServiceServicer_to_server(MessageService(message_repository,auth_repository), server)
-
-    # server.add_insecure_port('0.0.0.0:50053')
-    server.add_insecure_port('10.0.11.10:5003')
+    server.add_insecure_port(address)
     server.start()
     # print("Message service started on port 5003")
     server.wait_for_termination()

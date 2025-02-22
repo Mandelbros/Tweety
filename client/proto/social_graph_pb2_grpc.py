@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from server.proto import social_graph_pb2 as server_dot_proto_dot_social__graph__pb2
+from client.proto import social_graph_pb2 as social__graph__pb2
 
 GRPC_GENERATED_VERSION = '1.68.0'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in server/proto/social_graph_pb2_grpc.py depends on'
+        + f' but the generated code in social_graph_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -36,23 +36,23 @@ class SocialGraphServiceStub(object):
         """
         self.Follow = channel.unary_unary(
                 '/tweety.SocialGraphService/Follow',
-                request_serializer=server_dot_proto_dot_social__graph__pb2.FollowRequest.SerializeToString,
-                response_deserializer=server_dot_proto_dot_social__graph__pb2.FollowResponse.FromString,
+                request_serializer=social__graph__pb2.FollowRequest.SerializeToString,
+                response_deserializer=social__graph__pb2.FollowResponse.FromString,
                 _registered_method=True)
         self.Unfollow = channel.unary_unary(
                 '/tweety.SocialGraphService/Unfollow',
-                request_serializer=server_dot_proto_dot_social__graph__pb2.UnfollowRequest.SerializeToString,
-                response_deserializer=server_dot_proto_dot_social__graph__pb2.UnfollowResponse.FromString,
-                _registered_method=True)
-        self.GetFollowers = channel.unary_unary(
-                '/tweety.SocialGraphService/GetFollowers',
-                request_serializer=server_dot_proto_dot_social__graph__pb2.FollowersRequest.SerializeToString,
-                response_deserializer=server_dot_proto_dot_social__graph__pb2.FollowersResponse.FromString,
+                request_serializer=social__graph__pb2.UnfollowRequest.SerializeToString,
+                response_deserializer=social__graph__pb2.UnfollowResponse.FromString,
                 _registered_method=True)
         self.GetFollowing = channel.unary_unary(
                 '/tweety.SocialGraphService/GetFollowing',
-                request_serializer=server_dot_proto_dot_social__graph__pb2.FollowingRequest.SerializeToString,
-                response_deserializer=server_dot_proto_dot_social__graph__pb2.FollowingResponse.FromString,
+                request_serializer=social__graph__pb2.GetFollowingRequest.SerializeToString,
+                response_deserializer=social__graph__pb2.GetFollowingResponse.FromString,
+                _registered_method=True)
+        self.GetFollowers = channel.unary_unary(
+                '/tweety.SocialGraphService/GetFollowers',
+                request_serializer=social__graph__pb2.GetFollowersRequest.SerializeToString,
+                response_deserializer=social__graph__pb2.GetFollowersResponse.FromString,
                 _registered_method=True)
 
 
@@ -73,15 +73,15 @@ class SocialGraphServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetFollowers(self, request, context):
-        """RPC to get a list of followers
+    def GetFollowing(self, request, context):
+        """RPC to get a list of users the user is following
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetFollowing(self, request, context):
-        """RPC to get a list of users the user is following
+    def GetFollowers(self, request, context):
+        """RPC to get a list of followers of a given user
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -92,23 +92,23 @@ def add_SocialGraphServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Follow': grpc.unary_unary_rpc_method_handler(
                     servicer.Follow,
-                    request_deserializer=server_dot_proto_dot_social__graph__pb2.FollowRequest.FromString,
-                    response_serializer=server_dot_proto_dot_social__graph__pb2.FollowResponse.SerializeToString,
+                    request_deserializer=social__graph__pb2.FollowRequest.FromString,
+                    response_serializer=social__graph__pb2.FollowResponse.SerializeToString,
             ),
             'Unfollow': grpc.unary_unary_rpc_method_handler(
                     servicer.Unfollow,
-                    request_deserializer=server_dot_proto_dot_social__graph__pb2.UnfollowRequest.FromString,
-                    response_serializer=server_dot_proto_dot_social__graph__pb2.UnfollowResponse.SerializeToString,
-            ),
-            'GetFollowers': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetFollowers,
-                    request_deserializer=server_dot_proto_dot_social__graph__pb2.FollowersRequest.FromString,
-                    response_serializer=server_dot_proto_dot_social__graph__pb2.FollowersResponse.SerializeToString,
+                    request_deserializer=social__graph__pb2.UnfollowRequest.FromString,
+                    response_serializer=social__graph__pb2.UnfollowResponse.SerializeToString,
             ),
             'GetFollowing': grpc.unary_unary_rpc_method_handler(
                     servicer.GetFollowing,
-                    request_deserializer=server_dot_proto_dot_social__graph__pb2.FollowingRequest.FromString,
-                    response_serializer=server_dot_proto_dot_social__graph__pb2.FollowingResponse.SerializeToString,
+                    request_deserializer=social__graph__pb2.GetFollowingRequest.FromString,
+                    response_serializer=social__graph__pb2.GetFollowingResponse.SerializeToString,
+            ),
+            'GetFollowers': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetFollowers,
+                    request_deserializer=social__graph__pb2.GetFollowersRequest.FromString,
+                    response_serializer=social__graph__pb2.GetFollowersResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -136,8 +136,8 @@ class SocialGraphService(object):
             request,
             target,
             '/tweety.SocialGraphService/Follow',
-            server_dot_proto_dot_social__graph__pb2.FollowRequest.SerializeToString,
-            server_dot_proto_dot_social__graph__pb2.FollowResponse.FromString,
+            social__graph__pb2.FollowRequest.SerializeToString,
+            social__graph__pb2.FollowResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -163,35 +163,8 @@ class SocialGraphService(object):
             request,
             target,
             '/tweety.SocialGraphService/Unfollow',
-            server_dot_proto_dot_social__graph__pb2.UnfollowRequest.SerializeToString,
-            server_dot_proto_dot_social__graph__pb2.UnfollowResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetFollowers(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/tweety.SocialGraphService/GetFollowers',
-            server_dot_proto_dot_social__graph__pb2.FollowersRequest.SerializeToString,
-            server_dot_proto_dot_social__graph__pb2.FollowersResponse.FromString,
+            social__graph__pb2.UnfollowRequest.SerializeToString,
+            social__graph__pb2.UnfollowResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -217,8 +190,35 @@ class SocialGraphService(object):
             request,
             target,
             '/tweety.SocialGraphService/GetFollowing',
-            server_dot_proto_dot_social__graph__pb2.FollowingRequest.SerializeToString,
-            server_dot_proto_dot_social__graph__pb2.FollowingResponse.FromString,
+            social__graph__pb2.GetFollowingRequest.SerializeToString,
+            social__graph__pb2.GetFollowingResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetFollowers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/tweety.SocialGraphService/GetFollowers',
+            social__graph__pb2.GetFollowersRequest.SerializeToString,
+            social__graph__pb2.GetFollowersResponse.FromString,
             options,
             channel_credentials,
             insecure,

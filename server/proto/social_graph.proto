@@ -7,9 +7,9 @@ service SocialGraphService {
 
   rpc Unfollow(UnfollowRequest) returns (UnfollowResponse);   // RPC to unfollow a user
 
-  rpc GetFollowing(FollowingRequest) returns (FollowingResponse);   // RPC to get a list of users the user is following
+  rpc GetFollowing(GetFollowingRequest) returns (GetFollowingResponse);   // RPC to get a list of users the user is following
   
-  rpc GetFollowers(FollowersRequest) returns (FollowersResponse);   // RPC to get a list of followers of a given user
+  rpc GetFollowers(GetFollowersRequest) returns (GetFollowersResponse);   // RPC to get a list of followers of a given user
 }
 
 message FollowRequest {

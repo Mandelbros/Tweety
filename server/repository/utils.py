@@ -1,7 +1,7 @@
 import base64 
 import logging
 import grpc
-from chord.node import Node
+from server.chord.node import Node
 
 logging.basicConfig(level=logging.DEBUG)
 

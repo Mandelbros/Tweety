@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from server.proto import auth_pb2 as server_dot_proto_dot_auth__pb2
+from server.proto import auth_pb2 as auth__pb2
 
 GRPC_GENERATED_VERSION = '1.68.0'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in server/proto/auth_pb2_grpc.py depends on'
+        + f' but the generated code in auth_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -36,13 +36,13 @@ class AuthServiceStub(object):
         """
         self.Register = channel.unary_unary(
                 '/tweety.AuthService/Register',
-                request_serializer=server_dot_proto_dot_auth__pb2.RegisterRequest.SerializeToString,
-                response_deserializer=server_dot_proto_dot_auth__pb2.RegisterResponse.FromString,
+                request_serializer=auth__pb2.RegisterRequest.SerializeToString,
+                response_deserializer=auth__pb2.RegisterResponse.FromString,
                 _registered_method=True)
         self.Login = channel.unary_unary(
                 '/tweety.AuthService/Login',
-                request_serializer=server_dot_proto_dot_auth__pb2.LoginRequest.SerializeToString,
-                response_deserializer=server_dot_proto_dot_auth__pb2.LoginResponse.FromString,
+                request_serializer=auth__pb2.LoginRequest.SerializeToString,
+                response_deserializer=auth__pb2.LoginResponse.FromString,
                 _registered_method=True)
 
 
@@ -66,13 +66,13 @@ def add_AuthServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Register': grpc.unary_unary_rpc_method_handler(
                     servicer.Register,
-                    request_deserializer=server_dot_proto_dot_auth__pb2.RegisterRequest.FromString,
-                    response_serializer=server_dot_proto_dot_auth__pb2.RegisterResponse.SerializeToString,
+                    request_deserializer=auth__pb2.RegisterRequest.FromString,
+                    response_serializer=auth__pb2.RegisterResponse.SerializeToString,
             ),
             'Login': grpc.unary_unary_rpc_method_handler(
                     servicer.Login,
-                    request_deserializer=server_dot_proto_dot_auth__pb2.LoginRequest.FromString,
-                    response_serializer=server_dot_proto_dot_auth__pb2.LoginResponse.SerializeToString,
+                    request_deserializer=auth__pb2.LoginRequest.FromString,
+                    response_serializer=auth__pb2.LoginResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -100,8 +100,8 @@ class AuthService(object):
             request,
             target,
             '/tweety.AuthService/Register',
-            server_dot_proto_dot_auth__pb2.RegisterRequest.SerializeToString,
-            server_dot_proto_dot_auth__pb2.RegisterResponse.FromString,
+            auth__pb2.RegisterRequest.SerializeToString,
+            auth__pb2.RegisterResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -127,8 +127,8 @@ class AuthService(object):
             request,
             target,
             '/tweety.AuthService/Login',
-            server_dot_proto_dot_auth__pb2.LoginRequest.SerializeToString,
-            server_dot_proto_dot_auth__pb2.LoginResponse.FromString,
+            auth__pb2.LoginRequest.SerializeToString,
+            auth__pb2.LoginResponse.FromString,
             options,
             channel_credentials,
             insecure,

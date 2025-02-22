@@ -4,7 +4,7 @@ package tweety;
 
 message Message {
   string message_id = 1;
-  string username = 2;
+  string user_id = 2;
   string content = 3;
   string timestamp = 4; // ISO 8601 format
   bool is_repost = 5; // Indicates whether the message is a repost
@@ -12,14 +12,18 @@ message Message {
 }
 
 message User {
-    string username = 1;
+    string user_id = 1;
     string password_hash = 2;
 }
 
-message UserFollows {
-    repeated string following_users_ids = 1;
+message UserMessages {
+    repeated string message_ids = 1;
 }
 
-message UserPosts {
-    repeated string messages_ids = 1;
+message UserFollowing {
+    repeated string following_list = 1;
+}
+
+message UserFollowers {
+    repeated string followers_list = 1;
 }

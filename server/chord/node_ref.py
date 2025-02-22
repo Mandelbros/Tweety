@@ -1,4 +1,4 @@
-from chord.utils import getShaRepr
+from server.chord.utils import getShaRepr
 
 class NodeRef:
     def __init__(self, ip: str, port: int = 10000):
