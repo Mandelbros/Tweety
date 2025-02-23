@@ -1,6 +1,6 @@
 import logging
-from server.chord.utils import  getShaRepr
-from server.chord.node_ref import NodeRef
+from chord.utils import  getShaRepr
+from chord.node_ref import NodeRef
 
 class Node:
     def __init__(self, ip: str, port: int = 8001):

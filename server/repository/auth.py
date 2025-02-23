@@ -1,8 +1,8 @@
 import os
 import grpc
-from server.chord.node import Node
-from server.repository.utils import save, load, exists
-from server.proto.models_pb2 import User 
+from chord.node import Node
+from repository.utils import save, load, exists
+from proto.models_pb2 import User 
 
 class AuthRepository:
     def __init__(self, node: Node) -> None:

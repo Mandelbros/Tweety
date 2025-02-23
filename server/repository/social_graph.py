@@ -1,8 +1,8 @@
 import os
 import grpc
-from server.chord.node import Node
-from server.repository.utils import save, load, delete, exists
-from server.proto.models_pb2 import UserFollowing, UserFollowers
+from chord.node import Node
+from repository.utils import save, load, delete, exists
+from proto.models_pb2 import UserFollowing, UserFollowers
 
 class SocialGraphRepository:
     def __init__(self, node: Node) -> None:

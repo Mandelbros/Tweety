@@ -1,10 +1,10 @@
 import logging
 import grpc
 from concurrent import futures
-from server.proto.social_graph_pb2_grpc import SocialGraphServiceServicer, add_SocialGraphServiceServicer_to_server
-from server.proto.social_graph_pb2 import FollowResponse, UnfollowResponse, GetFollowingResponse, GetFollowersResponse 
-from server.repository.auth import AuthRepository
-from server.repository.social_graph import SocialGraphRepository
+from proto.social_graph_pb2_grpc import SocialGraphServiceServicer, add_SocialGraphServiceServicer_to_server
+from proto.social_graph_pb2 import FollowResponse, UnfollowResponse, GetFollowingResponse, GetFollowersResponse 
+from repository.auth import AuthRepository
+from repository.social_graph import SocialGraphRepository
 
 class SocialGraphService(SocialGraphServiceServicer):
     def __init__(self, social_graph_repository:SocialGraphRepository, auth_repository:AuthRepository):

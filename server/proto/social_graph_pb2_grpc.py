@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from server.proto import social_graph_pb2 as social__graph__pb2
+from proto import social_graph_pb2 as social__graph__pb2
 
 GRPC_GENERATED_VERSION = '1.68.0'
 GRPC_VERSION = grpc.__version__
