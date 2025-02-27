@@ -7,6 +7,7 @@ from chord.utils import  getShaRepr
 from chord.node_ref import NodeRef
 from chord.bounded_list import BoundedList
 from chord.finger_table import FingerTable
+from chord.timer import Timer
 from chord.constants import *
 from chord.utils import is_in_interval
 from config import SEPARATOR
@@ -40,6 +41,7 @@ class Node:
         threading.Thread(target=self.start_server, daemon=True).start()
 
         self.finger = FingerTable(self, m)
+        self.timer = Timer(self)
 
         # Start the thread for maintaining the finger table
         threading.Thread(target=self.finger.fix_fingers, daemon=True).start()
@@ -47,6 +49,7 @@ class Node:
         threading.Thread(target=self.check_predecessor, daemon=True).start()
         threading.Thread(target=self.check_successor, daemon=True).start()
         threading.Thread(target=self.fix_successors, daemon=True).start()
+        threading.Thread(target=self.timer.update_time, daemon=True).start()
         
     def get_key(self, key: str) -> str:
         logging.info(f'Get key {key}')
