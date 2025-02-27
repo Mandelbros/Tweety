@@ -67,16 +67,18 @@ def user_stats():
 
 # Function to handle login
 def handle_login(username, password):
-    response = login(username, password)
-    if response and response.success:
+    token = login(username, password)
+    if token:
         st.session_state.logged_in_user = username  # Store the logged-in user
+        st.session_state['token'] = token
+        st.success("Logueado Correctamente")
         switch_view("relationships")  # Change to relationships view
     else:
         st.error("Invalid username or password!")
 
 # Function to handle registration
-def handle_register(username, password):
-    response = register(username, password)
+def handle_register(username, email, name, password):
+    response = register(username, email, name, password)
     if response and response.success:
         st.success("Registration successful! Please log in.")
         switch_view("login")  # Redirect to login view
@@ -94,8 +96,11 @@ def login_register_view():
         if st.button("Login"):
             handle_login(username, password)
     elif option == "Register":
+        email = st.text_input("E-mail")
+        name = st.text_input("Name")
+
         if st.button("Register"):
-            handle_register(username, password)
+            handle_register(username, email, name, password)
 
 # Relationships Graph View
 def relationships_view():
@@ -163,6 +168,8 @@ def display_message(msg):
 # Message Posting View
 def message_view():
     st.title(f"💬 Posts")
+
+    token = st.session_state['token']
     
     # Text area for writing a new message
     with st.form("post_form"):
@@ -173,14 +180,14 @@ def message_view():
         )
         submitted = st.form_submit_button("Post 🚀")
         if submitted:
-            response = post_message(st.session_state.logged_in_user, content)
+            response = post_message(st.session_state.logged_in_user, content, token)
             if response and response.success:
                 st.success(response.message)
             else:
                 st.error("Failed to post the message.")
 
     if st.button("🔄 Refresh Messages"):
-        response = get_messages()
+        response = get_messages(st.session_state.logged_in_user, token)
         if response:
             # Store the messages in session state to persist them across renders
             st.session_state.messages = response.messages
@@ -205,7 +212,7 @@ def message_view():
     # Handle repost functionality after all buttons are rendered
     if st.session_state.get("repost_clicked", False):
         original_message_id = st.session_state.repost_message_id
-        repost_response = repost_message(st.session_state.logged_in_user, original_message_id)
+        repost_response = repost_message(st.session_state.logged_in_user, original_message_id, token)
         if repost_response and repost_response.success:
             st.success("Message reposted successfully!")
         else:

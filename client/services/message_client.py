@@ -2,7 +2,7 @@ import grpc
 from proto.message_pb2 import PostMessageRequest, GetMessagesRequest, RepostMessageRequest
 from proto.message_pb2_grpc import MessageServiceStub
 
-def post_message(username, content):
+def post_message(username, content, token):
     try:
         # with grpc.insecure_channel('127.0.0.1:50053') as channel:
         # with grpc.insecure_channel('tweety-server-1:50053') as channel:
@@ -14,7 +14,7 @@ def post_message(username, content):
         print(f"gRPC error: {e}")
         return None
 
-def get_messages(username=None):
+def get_messages(username, token):
     try:
         # with grpc.insecure_channel('127.0.0.1:50053') as channel:
         # with grpc.insecure_channel('tweety-server-1:50053') as channel:
@@ -26,7 +26,7 @@ def get_messages(username=None):
         print(f"gRPC error: {e}")
         return None
 
-def repost_message(username, original_message_id):
+def repost_message(username, original_message_id, token):
     try:
         # with grpc.insecure_channel('127.0.0.1:50053') as channel:
         # with grpc.insecure_channel('tweety-server-1:50053') as channel:
