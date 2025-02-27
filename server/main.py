@@ -1,17 +1,17 @@
-from server.services.auth import start_auth
-from server.services.social_graph import start_social_graph_service
-from server.services.message import start_message_service
+from services.auth import start_auth
+from services.social_graph import start_social_graph_service
+from services.message import start_message_service
 import threading
 import atexit
 import time
 import signal
 import sys
 import socket
-from server.chord.node import Node
-from server.repository.auth import AuthRepository
-from server.repository.message import MessageRepository
-from server.repository.social_graph import SocialGraphRepository
-from server.config import PORT
+from chord.node import Node
+from repository.auth import AuthRepository
+from repository.message import MessageRepository
+from repository.social_graph import SocialGraphRepository
+from config import PORT
 
 def run_services():
     ip = socket.gethostbyname(socket.gethostname())

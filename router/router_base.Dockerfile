@@ -1,5 +1,5 @@
-from alpine
+from python:3-alpine
 
-run apk add iptables && echo "net.ipv4.ip_forward=1" | tee -a /etc/sysctl.conf
+run apk update && apk add iptables && echo "net.ipv4.ip_forward=1"
 
 cmd /bin/sh

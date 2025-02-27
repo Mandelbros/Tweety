@@ -1,10 +1,10 @@
 from concurrent import futures
 import grpc
-from server.proto.auth_pb2 import RegisterResponse, LoginResponse
-from server.proto.auth_pb2_grpc import AuthServiceServicer, add_AuthServiceServicer_to_server 
+from proto.auth_pb2 import RegisterResponse, LoginResponse
+from proto.auth_pb2_grpc import AuthServiceServicer, add_AuthServiceServicer_to_server 
 import hashlib 
 import logging
-from server.repository.auth import AuthRepository
+from repository.auth import AuthRepository
 import time, jwt
 
 class AuthService(AuthServiceServicer):

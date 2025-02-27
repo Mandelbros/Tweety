@@ -1,94 +1,97 @@
-networks:
-  clients:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 10.0.10.0/24
-  servers:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 10.0.11.0/24
+version: "3.8"
 
 services:
+  router_base:
+    build:
+      context: ./router
+      dockerfile: router_base.Dockerfile
+    image: router:base
+    command: "echo 'router base built'"
+    # Este servicio solo se usa para construir la imagen, no necesita red.
+    network_mode: none
+    restart: "no"
+
   router:
-    image: tweety-router
+    build:
+      context: ./router
+      dockerfile: router.Dockerfile
     container_name: router
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - router_base
+    # Se adjuntan tres redes; el orden (tal como se define en YAML) asigna:
+    # eth0: servers, eth1: clients, eth2: multicast.
     networks:
-      clients:
-        ipv4_address: 10.0.10.254
       servers:
         ipv4_address: 10.0.11.254
-    ports:
-      - "80:80"  # Ejemplo: expone el puerto 80 para el enrutador
-    privileged: true
+      clients:
+        ipv4_address: 10.0.10.254
+      multicast: {}
+    restart: always
+
+  mcproxy:
+    build:
+      context: ./router
+      dockerfile: router.Dockerfile
+    container_name: mcproxy
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - router_base
+    networks:
+      servers:
+        ipv4_address: 10.0.11.253
+      clients:
+        ipv4_address: 10.0.10.253
+      multicast: {}
+    restart: always
 
   server:
-    # build:
-      # context: .
-      # dockerfile: server/Dockerfile
-    image:
-      tweety-server
-    container_name: server
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: server_app
+    # Asignamos la IP 10.0.11.10 en la red de servidores, que es la que usará el servicio.
     networks:
       servers:
         ipv4_address: 10.0.11.10
-    volumes:
-      - ./server/data.json:/app/server/data.json
     ports:
-      - "5000:5001"
-      - "5001:5002"
-      - "5002:5003"
-    environment:
-      - PYTHONUNBUFFERED=1
+      - "5001:5001"
+    restart: on-failure
 
-  client1:
-    # build:
-    #   context: .
-    #   dockerfile: client/Dockerfile
-    image: tweety-client
-    container_name: client1
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: client_app
     networks:
-      clients:
-        ipv4_address: 10.0.10.11
+      clients: {}
+      servers: {}
     ports:
       - "8501:8501"
-    depends_on:
-      - server
-    environment:
-      - PYTHONUNBUFFERED=1
-    privileged: true
+    restart: on-failure
 
-  client2:
-    # build:
-    #   context: .
-    #   dockerfile: client/Dockerfile
-    image: tweety-client
-    container_name: client2
-    networks:
-      clients:
-        ipv4_address: 10.0.10.12
-    ports:
-      - "8502:8501"
-    depends_on:
-      - server
-    environment:
-      - PYTHONUNBUFFERED=1
-    privileged: true
-
-  client3:
-    # build:
-    #   context: .
-    #   dockerfile: client/Dockerfile
-    image: tweety-client
-    container_name: client3
-    networks:
-      clients:
-        ipv4_address: 10.0.10.13
-    ports:
-      - "8503:8501"
-    depends_on:
-      - server
-    environment:
-      - PYTHONUNBUFFERED=1
-    privileged: true
+networks:
+  servers:
+    name: servers
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "10.0.11.0/24"
+  clients:
+    name: clients
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "10.0.10.0/24"
+  multicast:
+    name: multicast
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.16.0.0/24"

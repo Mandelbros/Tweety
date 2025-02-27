@@ -2,11 +2,11 @@ import logging
 import grpc
 from concurrent import futures
 import time 
-from server.proto.models_pb2 import Message
-from server.proto.message_pb2 import PostMessageResponse, GetMessagesResponse, RepostMessageResponse
-from server.proto.message_pb2_grpc import MessageServiceServicer, add_MessageServiceServicer_to_server
-from server.repository.message import MessageRepository
-from server.repository.auth import AuthRepository
+from proto.models_pb2 import Message
+from proto.message_pb2 import PostMessageResponse, GetMessagesResponse, RepostMessageResponse
+from proto.message_pb2_grpc import MessageServiceServicer, add_MessageServiceServicer_to_server
+from repository.message import MessageRepository
+from repository.auth import AuthRepository
 
 class MessageService(MessageServiceServicer):
     def __init__(self, message_repository:MessageRepository, auth_repository: AuthRepository):
