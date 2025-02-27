@@ -99,3 +99,37 @@ class NodeRef:
         """
         response = self.process_operation(CLOSEST_PRECEDING_FINGER, str(id)).decode().split(SEPARATOR)
         return NodeRef(response[1], self.port)
+    
+    def notify(self, node: 'NodeRef'):
+        """
+        Notifies the current node about the presence of another node.
+
+        Args:
+            node (NodeRef): The node to notify.
+        """
+        self.process_operation(NOTIFY, f'{node.ip}{SEPARATOR}{node.port}')
+
+    def get_successor_and_notify(self, index, ip) -> 'NodeRef':
+        """
+        Retrieves the successor node and notifies it.
+
+        Args:
+            index (int): The index of the node.
+            ip (str): The IP address of the node.
+
+        Returns:
+            NodeRef: A reference to the successor node.
+        """
+        response = self.process_operation(GET_SUCCESSOR_AND_NOTIFY, f'{index}{SEPARATOR}{ip}').decode().split(SEPARATOR)
+        return NodeRef(response[1], self.port)
+    
+    def ping(self) -> bool:
+        """
+        Pings the current node to check if it is alive.
+
+        Returns:
+            bool: True if the node is alive, False otherwise.
+        """
+        response = self.process_operation(PING).decode()
+        return response == ALIVE
+    
