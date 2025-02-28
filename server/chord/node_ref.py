@@ -133,3 +133,31 @@ class NodeRef:
         response = self.process_operation(PING).decode()
         return response == ALIVE
     
+    def ping_leader(self, id: int, time: int):
+        """
+        Pings the leader node.
+
+        Args:
+            id (int): The id of the node sending the ping.
+            time (int): The time of the ping.
+
+        Returns:
+            int: The response from the leader node.
+        """
+        response = self.process_operation(PING_LEADER, f'{id}{SEPARATOR}{time}').decode()
+        return int(response)
+
+    def election(self, first_id: int, leader_ip: int, leader_port: int) -> 'NodeRef':
+        """
+        Performs an election to determine the leader node.
+
+        Args:
+            first_id (int): The id of the first node.
+            leader_ip (int): The IP address of the leader node.
+            leader_port (int): The port of the leader node.
+
+        Returns:
+            NodeRef: A reference to the newly elected leader node.
+        """
+        response = self.process_operation(ELECTION, f'{first_id}{SEPARATOR}{leader_ip}{SEPARATOR}{leader_port}').decode().split(SEPARATOR)
+        return NodeRef(response[0], response[1])
