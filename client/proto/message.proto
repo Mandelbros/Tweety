@@ -11,7 +11,7 @@ service MessageService {
 }
 
 message GetMessagesRequest {
-  string username = 1; // Optional: Can be used to filter messages
+  string user_id = 1; // Optional: Can be used to filter messages
 }
 
 message GetMessagesResponse {
@@ -19,7 +19,7 @@ message GetMessagesResponse {
 }
 
 message PostMessageRequest {
-  string username = 1;
+  string user_id = 1;
   string content = 2;
 }
 
@@ -29,8 +29,8 @@ message PostMessageResponse {
 }
 
 message RepostMessageRequest {
-  string username = 1; // User who is reposting
-  int32 original_message_index = 2; // Index of the original message in the messages array
+  string user_id = 1; // User who is reposting
+  int32 original_message_id = 2; // Index of the original message in the messages array
 }
 
 message RepostMessageResponse {

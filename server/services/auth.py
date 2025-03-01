@@ -5,7 +5,9 @@ from proto.auth_pb2_grpc import AuthServiceServicer, add_AuthServiceServicer_to_
 import hashlib 
 import logging
 from repository.auth import AuthRepository
-import time, jwt
+import time, jwt, datetime, os
+
+SECRET_KEY = "la llave secreta papu"
 
 class AuthService(AuthServiceServicer):
     def __init__(self, auth_repository: AuthRepository, jwt_priv_key): 
@@ -41,17 +43,18 @@ class AuthService(AuthServiceServicer):
         logging.info("Logueado de forma exitosa")
         token = self.gen_token(user)
         return LoginResponse(token=token)
-
+    
     def gen_token(self, user):
+        # Set token expiration time (e.g., 24 hours from now)
+        expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        
+        # Create token payload
         payload = {
-            "exp": time.time() + 72 * 3600,
-            "iss": "auth.service",
-            "iat": time.time(),
-            "email": user.email,
-            "sub": user.username,
-            "name": user.name
+            'user_id': user.user_id,
+            'exp': expiration
         }
-        return jwt.encode(payload, self.jwt_priv_key, algorithm="RS256")
+        token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+        return token
 
 def start_auth(address, auth_repository: AuthRepository):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -61,12 +64,3 @@ def start_auth(address, auth_repository: AuthRepository):
     server.start()
     print("Auth server started or port 5001")    ### loggin remove
     server.wait_for_termination()
-
-# def load_private_key():
-#     with open(RSA_PRIVATE_KEY_PATH, "rb") as key_file:
-#         private_key = serialization.load_pem_private_key(
-#             key_file.read(),
-#             password=PASSWORD.encode(),
-#             backend=default_backend()
-#         )
-#     return private_key
