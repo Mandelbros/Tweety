@@ -2,7 +2,7 @@ import grpc
 from proto.message_pb2 import PostMessageRequest, GetMessagesRequest, RepostMessageRequest
 from proto.message_pb2_grpc import MessageServiceStub 
 from cache import FileCache
-from config import POST
+from config import MESSAGE
 from discoverer import get_host, get_authenticated_channel
 from proto import models_pb2
 import logging
@@ -14,7 +14,7 @@ async def get_messages(username, token, request=True):
             value = [models_pb2.Message.FromString(v) for v in cached_posts]
             return value
         
-    host = get_host(POST)
+    host = get_host(MESSAGE)
     channel = get_authenticated_channel(host, token)
     stub = MessageServiceStub(channel)
     request = GetMessagesRequest(user_id=username)
@@ -33,7 +33,7 @@ async def get_messages(username, token, request=True):
         return None  
     
 def post_message(username, content, token):
-    host = get_host(POST)
+    host = get_host(MESSAGE)
     channel = get_authenticated_channel(host, token)
     stub = MessageServiceStub(channel)
     request = PostMessageRequest(user_id=username, content=content)
@@ -46,7 +46,7 @@ def post_message(username, content, token):
         return False
     
 def repost_message(username, original_message_id, token):
-    host = get_host(POST)
+    host = get_host(MESSAGE)
     channel = get_authenticated_channel(host ,token)
     stub = MessageServiceStub(channel)
     request = RepostMessageRequest(user_id=username, original_message_id=original_message_id)
