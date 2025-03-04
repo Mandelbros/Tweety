@@ -3,15 +3,16 @@ import threading
 import socket
 import time
 
-from chord.utils import  getShaRepr
+from chord.utils import decode_dict, getShaRepr, is_in_interval
 from chord.node_ref import NodeRef
 from chord.bounded_list import BoundedList
 from chord.finger_table import FingerTable
 from chord.timer import Timer
+from chord.storage import Data
 from chord.elector import Elector
 from chord.discoverer import Discoverer
+from chord.replicator import Replicator
 from chord.constants import *
-from chord.utils import is_in_interval
 from config import SEPARATOR
 
 class Node:
@@ -46,6 +47,7 @@ class Node:
         self.timer = Timer(self)
         self.elector = Elector(self, self.timer)
         self.discoverer = Discoverer(self, self.succ_lock, self.pred_lock, self.elector, self.finger)
+        self.replicator = Replicator(self, self.timer)
 
         # Join to an existing Chord ring or create own
         self.discoverer.create_ring_or_join()
@@ -63,19 +65,75 @@ class Node:
         threading.Thread(target=self.discoverer.listen_for_announcements, daemon=True).start()
         
     def get_key(self, key: str) -> str:
-        logging.info(f'Get key {key}')
+        """
+        Retrieves the value associated with a given key from the successor node.
+        
+        Parameters:
+        - key (str): The key to retrieve.
 
-        return ''
+        Returns:
+        - str: The value associated with the key.
+        """
+        logging.info(f'Recuperar llave: {key}')
+        
+        key_hash = getShaRepr(key)
+        with self.succ_lock:
+            succ = self.finger.find_successor(key_hash)
+        data = succ.retrieve_key(key)
+        
+        logging.info(f'Llave {key} recuperada del sucesor {succ.id}')
+        return data.value
 
     def set_key(self, key: str, value: str) -> bool:
-        logging.info(f'Set key {key} with value {value}')
+        """
+        Sets the value for a given key on the successor node.
+        
+        Parameters:
+        - key (str): The key to set.
+        - value (str): The value to associate with the key.
 
-        return 0
+        Returns:
+        - bool: True if the key was successfully set, False otherwise.
+        """
+        logging.info(f'Fijando llave: {key} con valor: {value}')
+        
+        key_hash = getShaRepr(key)
+        with self.succ_lock:
+            succ = self.finger.find_successor(key_hash)
+
+        with self.timer.time_lock:
+            time = self.timer.time_counter
+
+        # Store key with the timestamp and replicate if necessary
+        response = succ.store_key(key, value, time, True)
+
+        logging.info(f'Llave {key} fijada exitosamente en sucesor {succ.id}')
+        return response
 
     def remove_key(self, key: str) -> bool:
-        logging.info(f'Remove key {key}')
+        """
+        Removes the given key from the successor node.
+        
+        Parameters:
+        - key (str): The key to remove.
 
-        return 0
+        Returns:
+        - bool: True if the key was successfully removed, False otherwise.
+        """
+        logging.info(f'Eliminando llave: {key}')
+        
+        key_hash = getShaRepr(key)
+        with self.succ_lock:
+            succ = self.finger.find_successor(key_hash)
+
+        with self.timer.time_lock:
+            time = self.timer.time_counter
+
+        # Delete key with the timestamp and replicate if necessary
+        response = succ.delete_key(key, time, True)
+
+        logging.info(f'Llave {key} eliminada exitosamente del sucesor {succ.id}')
+        return response
     
     def stabilize(self):
         """
@@ -97,6 +155,7 @@ class Node:
                         self.successors.set(0, succ_pred)
                     if succ_pred.id != self.id:
                         succ_pred.notify(self.ref)
+                        self.replicator.replicate_all_data(succ_pred)
                 
                 # Notify successor
                 if succ.id != self.id:
@@ -132,6 +191,7 @@ class Node:
                         self.predecessors.erase(0)
                     self.predecessors.set(0, node)
 
+                self.replicator.handle_new_predecessor()
                 return TRUE
             else:
                 logging.info(f'Nnguna actualización requerida para nodo {node.id}')
@@ -251,6 +311,7 @@ class Node:
 
                 if index == succs_len - 1:
                     self.successors.set(index + 1, succ)
+                    self.replicator.replicate_all_data(succ)
                     return (index + 1) % len(self.successors)
                 
                 next_succ = self.successors.get(index + 1)
@@ -340,6 +401,28 @@ class Node:
                     elif option == ELECTION:
                         id, ip, port = int(data[1]), data[2], int(data[3])
                         server_response = self.elector.election(id, ip, port)
+                    elif option == SET_PARTITION:
+                        dict = decode_dict(data[1])
+                        version = decode_dict(data[2])
+                        removed_dict = decode_dict(data[3])
+                        server_response = self.replicator.set_partition(dict, version, removed_dict)
+                    elif option == RESOLVE_DATA:
+                        dict = decode_dict(data[1])
+                        version = decode_dict(data[2])
+                        removed_dict = decode_dict(data[3])
+                        server_response = self.replicator.resolve_data(dict, version, removed_dict)
+                    elif option == RETRIEVE_KEY:
+                        key = data[1]
+                        server_response = self.replicator.get(key)
+                    elif option == STORE_KEY:
+                        key = data[1]
+                        value, version = data[2], int(data[3])
+                        rep = True if int(data[4]) == TRUE else False
+                        server_response = self.replicator.set(key, Data(value, version), rep)
+                    elif option == DELETE_KEY:
+                        key, time = data[1], data[2]
+                        rep = True if int(data[3]) == TRUE else False
+                        server_response = self.replicator.remove(key, time, rep)
                         
                     # Prepare the response to send to the client
                     if data_response:

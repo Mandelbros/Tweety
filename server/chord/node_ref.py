@@ -1,8 +1,10 @@
 import logging
 import socket
+from typing import List, Tuple
 
 from chord.constants import *
 from chord.utils import getShaRepr
+from chord.storage import Data
 from config import PORT, SEPARATOR
 
 class NodeRef:
@@ -161,3 +163,77 @@ class NodeRef:
         """
         response = self.process_operation(ELECTION, f'{first_id}{SEPARATOR}{leader_ip}{SEPARATOR}{leader_port}').decode().split(SEPARATOR)
         return NodeRef(response[0], response[1])
+    
+    def set_partition(self, dict: str, version: str, remove: str) -> bool:
+        """
+        Sets the partition on the current node.
+
+        Args:
+            dict (str): The dictionary for the partition.
+            version (str): The version of the partition.
+            remove (str): The key to remove.
+
+        Returns:
+            bool: True if the operation succeeded, False otherwise.
+        """
+        response = self.process_operation(SET_PARTITION, f'{dict}{SEPARATOR}{version}{SEPARATOR}{remove}').decode()
+        return False if response == '' else int(response) == TRUE
+
+    def resolve_data(self, dict: str, version: str, remove: str) -> Tuple[List[str], bool]:
+        """
+        Resolves data based on the given dictionary, version, and remove flags.
+
+        Args:
+            dict (str): The dictionary for the data.
+            version (str): The version of the data.
+            remove (str): The key to remove.
+
+        Returns:
+            Tuple[List[str], bool]: A tuple containing the list of resolved data and a flag indicating whether there were multiple entries.
+        """
+        response = self.process_operation(RESOLVE_DATA, f'{dict}{SEPARATOR}{version}{SEPARATOR}{remove}').decode().split(SEPARATOR)
+        return response, len(response) > 1
+    
+    def retrieve_key(self, key: str) -> Data:
+        """
+        Retrieves the value for a given key from the current node.
+
+        Args:
+            key (str): The key to retrieve.
+
+        Returns:
+            Data: The data associated with the key.
+        """
+        response = self.process_operation(RETRIEVE_KEY, key).decode().split(SEPARATOR)
+        return Data(response[0], int(response[1]))
+
+    def store_key(self, key: str, value: str, version: int, rep: bool = False) -> bool:
+        """
+        Stores a key-value pair in the current node.
+
+        Args:
+            key (str): The key to store.
+            value (str): The value to store.
+            version (int): The version of the key-value pair.
+            rep (bool): Whether the key-value pair is replicated (default is False).
+
+        Returns:
+            bool: True if the operation succeeded, False otherwise.
+        """
+        response = self.process_operation(STORE_KEY, f'{key}{SEPARATOR}{value}{SEPARATOR}{version}{SEPARATOR}{TRUE if rep else FALSE}').decode()
+        return False if response == '' else int(response) == TRUE
+
+    def delete_key(self, key: str, time: int, rep: bool = False) -> bool: 
+        """
+        Deletes a key-value pair from the current node.
+
+        Args:
+            key (str): The key to delete.
+            time (int): The timestamp of the deletion.
+            rep (bool): Whether the key-value pair is replicated (default is False).
+
+        Returns:
+            bool: True if the operation succeeded, False otherwise.
+        """
+        response = self.process_operation(DELETE_KEY, f'{key}{SEPARATOR}{time}{SEPARATOR}{TRUE if rep else FALSE}').decode()
+        return False if response == '' else int(response) == TRUE
