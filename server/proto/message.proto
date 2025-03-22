@@ -30,7 +30,7 @@ message PostMessageResponse {
 
 message RepostMessageRequest {
   string user_id = 1; // User who is reposting
-  int32 original_message_id = 2; // Index of the original message in the messages array
+  string original_message_id = 2; // Id of the original message
 }
 
 message RepostMessageResponse {

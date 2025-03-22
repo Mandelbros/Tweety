@@ -18,7 +18,7 @@ class MessageRepository:
         return None
 
     def load_message(self, message_id):
-        path = os.path.join("Message", message_id)
+        path = os.path.join("Message", str(message_id))
         message, err = load(self.node, path, Message())
 
         if err == grpc.StatusCode.NOT_FOUND:
@@ -34,10 +34,10 @@ class MessageRepository:
         list = []
 
         if not err:
-            list = user_messages.messages_ids
+            list = user_messages.message_ids
 
         list.append(message_id)
-        err = save(self.node, UserMessages(messages_ids = list), path)
+        err = save(self.node, UserMessages(message_ids = list), path)
 
         if err:
             return grpc.StatusCode.INTERNAL("Failed to save post to user: {}".format(err))
@@ -55,7 +55,7 @@ class MessageRepository:
         if err:
             return None, grpc.StatusCode.INTERNAL("Failed to load user posts: {}".format(err))
 
-        for message_id in user_messages.messages_ids:
+        for message_id in user_messages.message_ids:
             message, err = self.load_message(message_id)
             if err:
                 return None, err

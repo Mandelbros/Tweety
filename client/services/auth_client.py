@@ -14,7 +14,7 @@ def register(username, email, name, password):
     request = RegisterRequest(user=user)
     try:
         response = stub.Register(request)
-        return True
+        return response
     except grpc.RpcError as error:
         logging.error(f"An error occurred creating the user: {error.code()}: {error.details()}")
         return False

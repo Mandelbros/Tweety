@@ -2,6 +2,7 @@ import logging
 import grpc
 from concurrent import futures
 import time 
+from datetime import datetime, UTC
 from proto.models_pb2 import Message
 from proto.message_pb2 import PostMessageResponse, GetMessagesResponse, RepostMessageResponse
 from proto.message_pb2_grpc import MessageServiceServicer, add_MessageServiceServicer_to_server
@@ -32,7 +33,8 @@ class MessageService(MessageServiceServicer):
         content = request.content
 
         message_id = str(time.time_ns())
-        message = Message(message_id = message_id, user_id = user_id, content = content, timestamp = int(time.time()))
+        iso_timestamp = datetime.now(UTC).isoformat()
+        message = Message(message_id = message_id, user_id = user_id, content = content, timestamp = iso_timestamp)
 
         err = self.message_repository.save_message(message)
         if err:
@@ -60,7 +62,8 @@ class MessageService(MessageServiceServicer):
             context.abort(grpc.StatusCode.NOT_FOUND, "Original post not found")
 
         message_id = str(time.time_ns())
-        message = Message(message_id = message_id, user_id = user_id, content = original_message.content, timestamp = int(time.time()), original_post_id = original_message.message_id)
+        iso_timestamp = datetime.now(UTC).isoformat()
+        message = Message(message_id = message_id, user_id = user_id, content = original_message.content, timestamp = iso_timestamp, original_message_id = original_message.message_id)
 
         err = self.message_repository.save_message(message)
         if err:

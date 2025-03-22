@@ -24,7 +24,7 @@ class AuthRepository:
         return user, None
 
     def save_user(self, user):
-        path = os.path.join("User", user.username.lower())
+        path = os.path.join("User", user.user_id.lower())
         err = save(self.node, user, path)
 
         if err:

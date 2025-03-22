@@ -3,21 +3,21 @@ import logging
 import grpc
 from chord.node import Node
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 def exists(node: Node, path):
-    logging.debug(f"Checking if file exists: {path}")
+    logging.info(f"Checking if file exists: {path}")
 
     exists = node.get_key(path) != ''
     if not exists:
-        logging.debug("File doesn't exist")
+        logging.info("File doesn't exist")
         return False, None
     
-    logging.debug(f"File already exists: {path}")
+    logging.info(f"File already exists: {path}")
     return True, None
 
 def save(node: Node, obj, path):
-    logging.debug(f"Saving file: {path}")
+    logging.info(f"Saving file: {path}")
 
     try:
         data = obj.SerializeToString()
@@ -34,7 +34,7 @@ def save(node: Node, obj, path):
     return None
 
 def load(node: Node, path, obj):
-    logging.debug(f"Loading file: {path}")
+    logging.info(f"Loading file: {path}")
 
     data_str = node.get_key(path)
     if data_str == '':
@@ -51,7 +51,7 @@ def load(node: Node, path, obj):
     return obj, None
 
 def delete(node: Node, path):
-    logging.debug(f"Deleting file: {path}")
+    logging.info(f"Deleting file: {path}")
 
     ok = node.remove_key(path)
     if not ok:

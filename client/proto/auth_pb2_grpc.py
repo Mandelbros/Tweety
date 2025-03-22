@@ -5,7 +5,7 @@ import warnings
 
 from proto import auth_pb2 as auth__pb2
 
-GRPC_GENERATED_VERSION = '1.68.0'
+GRPC_GENERATED_VERSION = '1.70.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 

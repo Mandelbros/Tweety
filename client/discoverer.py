@@ -1,7 +1,12 @@
 import streamlit as st
 import socket, logging
-from cache import FileCache
 import grpc
+import struct
+from config import MULTICAST_GROUP, MULTICAST_PORT, TIMEOUT, ARE_YOU, YES_IM, SEPARATOR
+
+MESSAGE = f"{ARE_YOU}{SEPARATOR}0".encode()
+
+logging.basicConfig(level=logging.INFO)  # Set the log level to INFO
 
 def get_host(service):
     """
@@ -21,14 +26,17 @@ def get_host(service):
         ConnectionError: If no available servers are alive.
     """
     
-    server = st.session_state['server']
+    if "server" not in st.session_state:
+        st.session_state["server"] = None
 
-    if not is_alive(server, int(service)):
+    server = st.session_state["server"]
+
+    if not server or not is_alive(server, int(service)):
         update_server()
-        server = st.session_state['server']
+        server = st.session_state["server"]
 
     if server and is_alive(server, int(service)):
-        return (f"{server}:{service}")
+        return f"{server}:{service}"
 
     raise ConnectionError("No available servers are alive.")
 
@@ -41,7 +49,8 @@ def update_server():
     """
     server = discover()
     if server:
-        st.session_state['server'] = server
+        logging.info(f"Discoverer found {server}")
+        st.session_state['server'] = server[0]
     else:
         logging.info("No servers found")
 
@@ -63,14 +72,79 @@ def is_alive(host, port, timeout=2):
     Returns:
         bool: True if the server is alive, False otherwise.
     """
+    if not host:
+        return False
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True
-    except (socket.timeout, ConnectionRefusedError):
+    except (socket.timeout, ConnectionRefusedError, OSError):
         return False
     
 def discover():
-    pass
+    # Crear socket UDP y ligar al puerto multicast para recibir respuestas
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        sock.bind(('', MULTICAST_PORT))
+    except Exception as e:
+        logging.error(f"Error al hacer bind del socket: {e}")
+        raise
+
+    sock.settimeout(TIMEOUT)
+
+    # Configurar TTL para el paquete multicast
+    ttl = struct.pack('b', 1)
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+
+    # Deshabilitar el loopback multicast para no recibir nuestro propio mensaje
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
+
+    try:
+        # Unirse al grupo multicast para recibir respuestas
+        group = socket.inet_aton(MULTICAST_GROUP)
+        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+
+        # Enviar el mensaje de descubrimiento
+        sock.sendto(MESSAGE, (MULTICAST_GROUP, MULTICAST_PORT))
+        logging.info(f"Multicast enviado a {(MULTICAST_GROUP, MULTICAST_PORT)}: {MESSAGE.decode()}")
+
+        # Esperar respuestas válidas
+        while True:
+            try:
+                data, server = sock.recvfrom(1024)
+                decoded = data.decode().strip()
+                logging.info(f"Respuesta recibida de {server}: {decoded}")
+
+                # Si se recibe el mismo mensaje de descubrimiento, se ignora
+                if data == MESSAGE:
+                    logging.info("Recibido eco del mensaje de descubrimiento, ignorando.")
+                    continue
+
+                # Parsear la respuesta usando el separador
+                parts = decoded.split(SEPARATOR)
+                if len(parts) != 2:
+                    logging.info(f"Mensaje mal formado, ignorando: {decoded}")
+                    continue
+
+                prefix, leader_info = parts
+                if prefix != YES_IM:
+                    logging.info(f"Mensaje no válido (prefijo incorrecto): {decoded}")
+                    continue
+
+                # Si la respuesta es válida, retornar la IP del servidor y la info del líder
+                logging.info(f"Respuesta válida recibida: {decoded} desde {server[0]}")
+                return server[0], leader_info
+
+            except socket.timeout:
+                logging.info("Timeout esperando respuesta de servidor.")
+                break
+    except Exception as e:
+        logging.error(f"Error durante la búsqueda de servidores: {e}")
+    finally:
+        sock.close()
+
+    raise RuntimeError("No se encontró ningún servidor disponible.")
 
 
 def get_authenticated_channel(host, token):

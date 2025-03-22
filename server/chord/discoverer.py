@@ -4,7 +4,7 @@ import time
 
 from chord.node_ref import NodeRef
 from chord.constants import ARE_YOU, EMPTY, YES_IM
-from config import BROADCAST_LISTEN_PORT, BROADCAST_REQUEST_PORT, SEPARATOR
+from config import SEPARATOR, MULTICAST_GROUP, MULTICAST_PORT
 from chord.elector import Elector
 from chord.finger_table import FingerTable
 
@@ -80,48 +80,51 @@ class Discoverer:
 
     def send_announcement(self):
         """
-        Broadcasts an announcement to discover a chord ring. The node sends a message
-        to find any existing ring in the network.
+        Multicast announcement to discover a chord ring.
+        The node sends a message to find any existing ring in the network.
 
         Returns:
             tuple: The IP of the discovered node and leader, or EMPTY values and error if no discovery occurs.
         """
-        logging.info('Broadcasting para descubrir un anillo de Chord existente...')
-        timeout = 5  # Set a timeout for discovery attempts
+        import struct
 
-        broadcast_addr = ('<broadcast>', int(BROADCAST_LISTEN_PORT))
+        logging.info('Enviando multicast para descubrir un anillo de Chord existente...')
+        timeout = 5  # Set a timeout for discovery attempts
+        multicast_addr = (MULTICAST_GROUP, MULTICAST_PORT)
 
         try:
-            # Create a socket for broadcasting
-            conn = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            conn.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            conn.bind(('', int(BROADCAST_REQUEST_PORT)))
+            # Create a UDP socket
+            conn = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            ttl = struct.pack('b', 1)
+            conn.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
         except Exception as e:
-            logging.error(f"Error montando el socket de broadcast: {e}")
+            logging.error(f"Error configurando socket multicast: {e}")
             return EMPTY, EMPTY, e
 
-        # Compose the broadcast message with the node's ID
+        # Compose the multicast message with the node's ID
         message = f"{ARE_YOU}{SEPARATOR}{self.node.id}".encode()
-        conn.sendto(message, broadcast_addr)
+        try:
+            conn.sendto(message, multicast_addr)
+        except Exception as e:
+            logging.error(f"Error enviando mensaje multicast: {e}")
+            return EMPTY, EMPTY, e
 
-        buffer = bytearray(1024)  # Buffer to store incoming messages
-        conn.settimeout(2)  # Set a timeout for receiving responses
+        buffer = bytearray(1024)
+        conn.settimeout(2)
 
-        # Attempt to receive responses for the set timeout duration
         for _ in range(timeout):
             try:
-                nn, addr = conn.recvfrom_into(buffer)  # Receive response from any node
+                nn, addr = conn.recvfrom_into(buffer)
                 res = buffer[:nn].decode().split(SEPARATOR)
                 message = res[0]
 
-                # If the response is valid, return the IP and leader information
                 if message == YES_IM and len(res) == 2:
                     ip = addr[0]
                     leader_ip = res[1]
-                    logging.info(f"Anillo de Chord descubierto en {ip}. IP del leader: {leader_ip}")
+                    logging.info(f"Anillo de Chord descubierto en {ip}. IP del líder: {leader_ip}")
                     return ip, leader_ip, None
             except socket.timeout:
-                continue  # Retry on timeout
+                continue
             except Exception as e:
                 logging.error(f"Error recibiendo mensaje: {e}")
                 return EMPTY, EMPTY, e
@@ -131,55 +134,88 @@ class Discoverer:
 
     def listen_for_announcements(self):
         """
-        Listens for broadcast announcements from other nodes that are looking to join
+        Listens for multicast announcements from other nodes that are looking to join
         or discover the chord ring.
-
-        This function waits for incoming messages and responds with the current node's leader.
         """
+        import struct
+
         try:
-            # Create a socket to listen for announcements
-            conn = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            conn.bind(('', BROADCAST_LISTEN_PORT))
+            logging.info("Configurando socket multicast listener...")
+
+            conn = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            conn.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            conn.bind(('', MULTICAST_PORT))
+
+            # Join the multicast group
+            group = socket.inet_aton(MULTICAST_GROUP)
+            mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+            conn.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+            logging.info(f"Unido al grupo multicast {MULTICAST_GROUP} en el puerto {MULTICAST_PORT}")
         except Exception as e:
-            logging.error(f"Error corriendo servidor UDP: {e}")
+            logging.error(f"Error configurando socket multicast listener: {e}")
             return
 
-        buffer = bytearray(1024)  # Buffer to store received messages
+        buffer = bytearray(1024)
 
         while True:
             try:
-                # Wait for incoming messages
+                # Espera el mensaje multicast
+                logging.debug("Esperando mensaje multicast...")
                 nn, client_addr = conn.recvfrom_into(buffer)
+
+                # Verifica si se ha recibido algo
+                if nn == 0:
+                    logging.debug("No se recibió ningún mensaje, continuando...")
+                    continue
+
+                logging.info(f"Mensaje recibido de {client_addr} ({nn} bytes)")
+
             except Exception as e:
                 logging.error(f"Error leyendo del buffer: {e}")
                 continue
 
-            with self.elector.leader_lock:
-                leader_id = self.elector.leader.id
-
-            if leader_id != self.node.id:
-                continue  # Ignore messages if this node is not the leader
-
-            res = buffer[:nn].decode().split(SEPARATOR)
-
-            if len(res) != 2:
-                continue  # Skip invalid messages
-
-            message = res[0]
-            id = int(res[1])
-
-            if id == self.node.id:
-                continue  # Ignore messages from itself
-
-            logging.info(f"Mensaje recibido de {client_addr}")
-
-            if message == ARE_YOU:
+            try:
+                # Revisa el ID del líder
                 with self.elector.leader_lock:
-                    leader = self.elector.leader
+                    leader_id = self.elector.leader.id
 
-                # Respond with YES_IM and the leader's IP address
-                response = f"{YES_IM}{SEPARATOR}{leader.ip}".encode()
-                conn.sendto(response, client_addr)
+                logging.debug(f"Líder actual: {leader_id}, Nodo actual: {self.node.id}")
+
+                if leader_id != self.node.id:
+                    logging.debug("Este nodo no es el líder, ignorando mensaje...")
+                    continue  # Ignorar si no es el líder
+
+                res = buffer[:nn].decode().split(SEPARATOR)
+
+                if len(res) != 2:
+                    logging.debug(f"Mensaje mal formado, se esperaban 2 partes pero se recibió: {len(res)}")
+                    continue
+
+                message, id_str = res[0], res[1]
+
+                try:
+                    id = int(id_str)
+                except ValueError:
+                    logging.debug(f"ID inválido recibido: {id_str}, ignorando mensaje...")
+                    continue
+
+                if id == self.node.id:
+                    logging.debug(f"Mensaje recibido del propio nodo (ID: {self.node.id}), ignorando...")
+                    continue  # Ignorar los mensajes propios
+
+                logging.info(f"Mensaje recibido: {message} con ID: {id} de {client_addr}")
+
+                if message == ARE_YOU:
+                    with self.elector.leader_lock:
+                        leader = self.elector.leader
+
+                    # Enviar la respuesta al mismo grupo multicast
+                    response = f"{YES_IM}{SEPARATOR}{leader.ip}".encode()
+                    logging.info(f"Enviando respuesta a {MULTICAST_GROUP} ({MULTICAST_PORT}) con IP del líder: {leader.ip}")
+                    conn.sendto(response, (MULTICAST_GROUP, MULTICAST_PORT))
+
+            except Exception as e:
+                logging.error(f"Error procesando el mensaje: {e}")
 
     def create_ring(self):
         """
@@ -233,7 +269,7 @@ class Discoverer:
                     node_ip, leader_ip, error = self.send_announcement()
                     if error or node_ip == EMPTY:
                         if error:
-                            logging.error(f'Error en broadcast: {error}')
+                            logging.error(f'Error en multicast: {error}')
                     else:
                         leader = NodeRef(leader_ip)
                         if leader.id > self.node.id:

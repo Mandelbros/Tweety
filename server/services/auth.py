@@ -27,8 +27,8 @@ class AuthService(AuthServiceServicer):
         return RegisterResponse(success=True, message="Usuario creado correctamente")
 
     def Login(self, request, context): 
-        username = request.user_id
-        password = request.password_hash
+        username = request.username
+        password = request.password
         user, err = self.auth_repository.load_user(username)
 
         if err:
@@ -53,12 +53,12 @@ class AuthService(AuthServiceServicer):
             'user_id': user.user_id,
             'exp': expiration
         }
-        token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+        token = jwt.encode(payload, self.jwt_priv_key, algorithm='HS256')
         return token
 
 def start_auth(address, auth_repository: AuthRepository):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    add_AuthServiceServicer_to_server(AuthService(auth_repository), server)
+    add_AuthServiceServicer_to_server(AuthService(auth_repository, SECRET_KEY), server)
    
     server.add_insecure_port(address)
     server.start()

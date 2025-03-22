@@ -1,6 +1,7 @@
 import streamlit as st
 from datetime import datetime, timezone
 import pytz
+import asyncio
 from services.auth_client import register, login
 from services.social_graph_client import follow_user, unfollow_user, get_followers, get_following
 from services.message_client import post_message, get_messages, repost_message
@@ -40,16 +41,21 @@ def navbar():
             st.rerun()
 
 def user_stats():
-    response_followers = get_followers(st.session_state.logged_in_user)
-    if response_followers:
-        followers = len(response_followers.followers)
+    token = st.session_state['token']
+    
+    # Ejecutar la corrutina get_followers
+    response_followers = asyncio.run(get_followers(st.session_state.logged_in_user, token))
+    
+    if response_followers is not None:
+        followers = len(response_followers)
     else:
         followers = "error"
         st.error("Failed to retrieve followers.")
 
-    response_following = get_following(st.session_state.logged_in_user)
-    if response_following:
-        following = len(response_following.following)
+    # Si get_following también es async, debes usar asyncio.run para ella también
+    response_following = asyncio.run(get_following(st.session_state.logged_in_user, token))  # ← Ajusta si es async
+    if response_following is not None:
+        following = len(response_following)
     else:
         following = "error"
         st.error("Failed to retrieve following.")
@@ -111,30 +117,34 @@ def relationships_view():
     option = st.selectbox("Choose an action", ["Follow a User", "View Followers", "View Following"])
     if option == "Follow a User":
         user_to_follow = st.text_input("Enter username to follow")
+        token = st.session_state['token']
         if st.button("👉 Follow"):
-            response = follow_user(st.session_state.logged_in_user, user_to_follow)
+            response = follow_user(st.session_state.logged_in_user, user_to_follow, token)
             if response and response.success:
                 st.success(f"You are now following {user_to_follow}.")
             else:
                 st.error("Failed to follow the user.")
     elif option == "View Followers":
-        response = get_followers(st.session_state.logged_in_user)
-        if response:
+        token = st.session_state['token']
+        response = asyncio.run(get_followers(st.session_state.logged_in_user, token))
+        if response is not None:
             st.markdown("### Your followers:")
-            for follower in response.followers:
+            for follower in response:
                 st.markdown(f"👥 **{follower}**")
         else:
             st.error("Failed to retrieve followers.")
     elif option == "View Following":
-        response = get_following(st.session_state.logged_in_user)
-        if response:
+        token = st.session_state['token']
+        response = asyncio.run(get_following(st.session_state.logged_in_user, token))
+        if response is not None:
             st.markdown("### You are following:")
-            for following in response.following:
+            for following in response:
                 st.markdown(f"👥 **{following}**")
         else:
             st.error("Failed to retrieve following list.")
 
 def format_date_time(iso_timestamp):
+    return iso_timestamp
     # Assume Havana time (Cuba Standard Time - CST)
     havana_tz = pytz.timezone('America/Havana')
     naive_dt = datetime.strptime(iso_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
@@ -146,7 +156,7 @@ def display_message(msg):
         st.markdown(
             f"""
             <div style="background-color:rgb(28, 33, 44);padding:10px;margin:10px 0;border-radius:10px;">
-                <h5><strong>{msg.username}</strong> <small>reposted from <strong>{msg.original_username}</strong></small></h5>
+                <h5><strong>{msg.user_id}</strong> <small>reposted from <strong>{msg.original_message_id}</strong></small></h5>
                 <p style="color:#ddd;">“{msg.content}”</p>
                 <small style="color:gray;">{format_date_time(msg.timestamp)}</small>
             </div>
@@ -157,7 +167,7 @@ def display_message(msg):
         st.markdown(
             f"""
             <div style="background-color:rgb(20, 24, 32);padding:10px;margin:10px 0;border-radius:10px;">
-                <h5><strong>{msg.username}</strong></h5>
+                <h5><strong>{msg.user_id}</strong></h5>
                 <p style="color:#ddd;">“{msg.content}”</p>
                 <small style="color:gray;">{format_date_time(msg.timestamp)}</small>
             </div>
@@ -187,12 +197,25 @@ def message_view():
                 st.error("Failed to post the message.")
 
     if st.button("🔄 Refresh Messages"):
-        response = get_messages(st.session_state.logged_in_user, token)
-        if response:
-            # Store the messages in session state to persist them across renders
-            st.session_state.messages = response.messages
+        response = asyncio.run(get_following(st.session_state.logged_in_user, token))
+        users = [st.session_state.logged_in_user]
+        if response is not None:
+            for following in response:
+                users.append(following)
         else:
-            st.error("Failed to load messages.")
+            st.error("Failed to retrieve following list.")
+
+        messages = []
+        for user in users:
+            response = asyncio.run(get_messages(user, token))
+            if response:
+                # Store the messages in session state to persist them across renders
+                for msg in response.messages:
+                    messages.append(msg)
+            else:
+                st.error(f"Failed to load messages of user {user}.")
+
+        st.session_state.messages = messages
     
     # Ensure session state has a list of messages
     if "messages" in st.session_state:
@@ -205,7 +228,7 @@ def message_view():
             
             # If the button is clicked, update session state
             if st.button("🔁 Repost", key=button_key):
-                st.session_state.repost_message_id = idx
+                st.session_state.repost_message_id = msg.message_id
                 st.session_state.repost_clicked = True
             st.markdown("---")
 
