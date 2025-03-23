@@ -144,36 +144,62 @@ def relationships_view():
             st.error("Failed to retrieve following list.")
 
 def format_date_time(iso_timestamp):
-    return iso_timestamp
-    # Assume Havana time (Cuba Standard Time - CST)
-    havana_tz = pytz.timezone('America/Havana')
-    naive_dt = datetime.strptime(iso_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
-    aware_dt = havana_tz.localize(naive_dt)
-    return aware_dt.strftime("%d/%m/%Y %H:%M:%S %Z%z")
+    try:
+        dt = datetime.fromisoformat(iso_timestamp)
+        now = datetime.now(timezone.utc)
+
+        if dt.date() == now.date():
+            return f"Today · {dt.strftime('%H:%M')}"
+        elif (now.date() - dt.date()).days == 1:
+            return f"Yesterday · {dt.strftime('%H:%M')}"
+        else:
+            return dt.strftime('%b %d, %Y · %H:%M')  # e.g., Mar 21, 2025 · 14:35
+    except Exception as e:
+        return iso_timestamp  # fallback in case of error
 
 def display_message(msg):
+    # Format timestamps using your format_date_time function
     if msg.is_repost:
-        st.markdown(
-            f"""
-            <div style="background-color:rgb(28, 33, 44);padding:10px;margin:10px 0;border-radius:10px;">
-                <h5><strong>{msg.user_id}</strong> <small>reposted from <strong>{msg.original_message_id}</strong></small></h5>
-                <p style="color:#ddd;">“{msg.content}”</p>
-                <small style="color:gray;">{format_date_time(msg.timestamp)}</small>
+        repost_time = format_date_time(msg.timestamp)
+        original_time = format_date_time(msg.original_message_timestamp)
+        html = f"""
+        <div style="background-color:#2a2f3a; padding:16px; margin:12px 0; border-radius:12px; border-left:4px solid #888; font-family:sans-serif;">
+            <div style="font-size:1.1em; color:gray; margin-bottom:8px;">
+                🔁 <strong>{msg.user_id}</strong>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            <div style="background-color:#1c1f27; padding:12px; border-radius:8px;">
+                <table style="width:100%; border-collapse: collapse; border: none;">
+                    <tr style="border: none;">
+                        <td style="border: none; padding: 0; margin: 0; color:white; font-weight:bold; font-size:1.0em;">{msg.original_message_user_id}</td>
+                        <td style="border: none; padding: 0; margin: 0; text-align:right; color:gray;">
+                            <small>from {original_time}</small>
+                        </td>
+                    </tr>
+                    <tr style="border: none;">
+                        <td colspan="2" style="border: none; padding: 0; margin: 0; padding-top:8px; color:#ccc; line-height:1.4;">
+                            “{msg.content}”
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div style="text-align:right; margin-top:8px;">
+                <small style="color:gray;">{repost_time}</small>
+            </div>
+        </div>
+        """
+        st.markdown(html, unsafe_allow_html=True)
     else:
-        st.markdown(
-            f"""
-            <div style="background-color:rgb(20, 24, 32);padding:10px;margin:10px 0;border-radius:10px;">
-                <h5><strong>{msg.user_id}</strong></h5>
-                <p style="color:#ddd;">“{msg.content}”</p>
-                <small style="color:gray;">{format_date_time(msg.timestamp)}</small>
+        timestamp = format_date_time(msg.timestamp)
+        html = f"""
+        <div style="background-color:#1e222b; padding:16px; margin:12px 0; border-radius:12px; font-family:sans-serif;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h5 style="margin:0; color:white;">{msg.user_id}</h5>
+                <span style="font-size:0.85em; color:gray;">{timestamp}</span>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            <p style="color:#ddd; margin-top:10px; margin-bottom:0;">“{msg.content}”</p>
+        </div>
+        """
+        st.markdown(html, unsafe_allow_html=True)
 
 # Message Posting View
 def message_view():

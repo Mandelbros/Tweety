@@ -34,7 +34,7 @@ class MessageService(MessageServiceServicer):
 
         message_id = str(time.time_ns())
         iso_timestamp = datetime.now(UTC).isoformat()
-        message = Message(message_id = message_id, user_id = user_id, content = content, timestamp = iso_timestamp)
+        message = Message(message_id = message_id, user_id = user_id, content = content, timestamp = iso_timestamp, is_repost = False)
 
         err = self.message_repository.save_message(message)
         if err:
@@ -63,7 +63,7 @@ class MessageService(MessageServiceServicer):
 
         message_id = str(time.time_ns())
         iso_timestamp = datetime.now(UTC).isoformat()
-        message = Message(message_id = message_id, user_id = user_id, content = original_message.content, timestamp = iso_timestamp, original_message_id = original_message.message_id)
+        message = Message(message_id = message_id, user_id = user_id, content = original_message.content, timestamp = iso_timestamp, is_repost = True, original_message_id = original_message.message_id, original_message_user_id = original_message.user_id, original_message_timestamp = original_message.timestamp)
 
         err = self.message_repository.save_message(message)
         if err:

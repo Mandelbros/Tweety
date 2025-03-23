@@ -8,7 +8,9 @@ message Message {
   string content = 3;
   string timestamp = 4; // ISO 8601 format
   bool is_repost = 5; // Indicates whether the message is a repost
-  string original_message_id = 6; // Original poster's username, if a repost
+  string original_message_id = 6; // Original poster's id, if a repost
+  string original_message_user_id = 7; // Original poster's username, if a repost
+  string original_message_timestamp = 8; // Original poster's timestamp, if a repost
 }
 
 message User {
