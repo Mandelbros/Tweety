@@ -77,8 +77,8 @@ def handle_login(username, password):
     if token:
         st.session_state.logged_in_user = username  # Store the logged-in user
         st.session_state['token'] = token
-        st.success("Logueado Correctamente")
         switch_view("relationships")  # Change to relationships view
+        st.rerun()
     else:
         st.error("Invalid username or password!")
 
@@ -122,8 +122,9 @@ def relationships_view():
             response = follow_user(st.session_state.logged_in_user, user_to_follow, token)
             if response and response.success:
                 st.success(f"You are now following {user_to_follow}.")
+                st.rerun()
             else:
-                st.error("Failed to follow the user.")
+                st.error(f"Failed to follow the user. {response.message}")
     elif option == "View Followers":
         token = st.session_state['token']
         response = asyncio.run(get_followers(st.session_state.logged_in_user, token))
@@ -201,9 +202,36 @@ def display_message(msg):
         """
         st.markdown(html, unsafe_allow_html=True)
 
+def refresh_messages():
+    token = st.session_state['token']
+    response = asyncio.run(get_following(st.session_state.logged_in_user, token))
+    users = [st.session_state.logged_in_user]
+    if response is not None:
+        for following in response:
+            users.append(following)
+    else:
+        st.error("Failed to retrieve following list.")
+
+    messages = []
+    for user in users:
+        response = asyncio.run(get_messages(user, token))
+        if response:
+            # Store the messages in session state to persist them across renders
+            for msg in response.messages:
+                messages.append(msg)
+        else:
+            st.error(f"Failed to load messages of user {user}.")
+
+    # Ordenar mensajes por fecha de más reciente a más antiguo
+    from datetime import datetime
+    messages.sort(key=lambda msg: datetime.fromisoformat(msg.timestamp), reverse=True)
+
+    st.session_state.messages = messages
+
 # Message Posting View
 def message_view():
     st.title(f"💬 Posts")
+    refresh_messages()
 
     token = st.session_state['token']
     
@@ -218,30 +246,16 @@ def message_view():
         if submitted:
             response = post_message(st.session_state.logged_in_user, content, token)
             if response and response.success:
+                refresh_messages()
                 st.success(response.message)
             else:
-                st.error("Failed to post the message.")
+                msg = ""
+                if response:
+                    msg = response.message
+                st.error(f"Failed to post the message. {msg}")
 
     if st.button("🔄 Refresh Messages"):
-        response = asyncio.run(get_following(st.session_state.logged_in_user, token))
-        users = [st.session_state.logged_in_user]
-        if response is not None:
-            for following in response:
-                users.append(following)
-        else:
-            st.error("Failed to retrieve following list.")
-
-        messages = []
-        for user in users:
-            response = asyncio.run(get_messages(user, token))
-            if response:
-                # Store the messages in session state to persist them across renders
-                for msg in response.messages:
-                    messages.append(msg)
-            else:
-                st.error(f"Failed to load messages of user {user}.")
-
-        st.session_state.messages = messages
+        refresh_messages()
     
     # Ensure session state has a list of messages
     if "messages" in st.session_state:
@@ -262,10 +276,16 @@ def message_view():
     if st.session_state.get("repost_clicked", False):
         original_message_id = st.session_state.repost_message_id
         repost_response = repost_message(st.session_state.logged_in_user, original_message_id, token)
+
         if repost_response and repost_response.success:
             st.success("Message reposted successfully!")
+            st.session_state.repost_clicked = False
+            st.rerun()
         else:
-            st.error("Failed to repost the message.")
+            msg = ""
+            if repost_response:
+                msg = repost_response.message
+            st.error(f"Failed to repost the message. {msg}")
         # Reset repost state after handling
         st.session_state.repost_clicked = False
 

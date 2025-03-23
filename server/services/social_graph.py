@@ -16,13 +16,15 @@ class SocialGraphService(SocialGraphServiceServicer):
         followed_username = request.followed_id
 
         if username == followed_username:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Cannot follow yourself")
+            return FollowResponse(success=False, message=f"Cannot follow yourself")
 
-        if not self.auth_repository.exists_user(username):
+        exists, err = self.auth_repository.exists_user(username)
+        if not exists:
             context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
 
-        if not self.auth_repository.exists_user(followed_username):
-            context.abort(grpc.StatusCode.NOT_FOUND, "Target user not found")
+        exists, err = self.auth_repository.exists_user(followed_username)
+        if not exists:
+            return FollowResponse(success=False, message=f"Target user not found")
 
         ok, err = self.social_graph_repository.add_to_following_list(username, followed_username)
         if err:
@@ -45,10 +47,12 @@ class SocialGraphService(SocialGraphServiceServicer):
         if username == unfollowed_username:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Cannot unfollow yourself")
 
-        if not self.auth_repository.exists_user(username):
+        exists, err = self.auth_repository.exists_user(username)
+        if not exists:
             context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
 
-        if not self.auth_repository.exists_user(unfollowed_username):
+        exists, err = self.auth_repository.exists_user(unfollowed_username)
+        if not exists:
             context.abort(grpc.StatusCode.NOT_FOUND, "Target user not found")
 
         ok, err = self.social_graph_repository.remove_from_following_list(username, unfollowed_username)
@@ -68,7 +72,8 @@ class SocialGraphService(SocialGraphServiceServicer):
     def GetFollowing(self, request, context):
         username = request.user_id
 
-        if not self.auth_repository.exists_user(username):
+        exists, err = self.auth_repository.exists_user(username)
+        if not exists:
             context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
 
         following_list, err = self.social_graph_repository.load_following_list(username)
@@ -80,7 +85,8 @@ class SocialGraphService(SocialGraphServiceServicer):
     def GetFollowers(self, request, context):
         username = request.user_id
 
-        if not self.auth_repository.exists_user(username):
+        exists, err = self.auth_repository.exists_user(username)
+        if not exists:
             context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
 
         followers_list, err = self.social_graph_repository.load_followers_list(username)

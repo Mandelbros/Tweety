@@ -53,9 +53,9 @@ class MessageService(MessageServiceServicer):
 
         for message in messages:
             if message.original_message_id == request.original_message_id:
-                context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User already reposted this post")
+                return RepostMessageResponse(success=False, message="You already reposted this post")
             if message.message_id == request.original_message_id:  
-                context.abort(grpc.StatusCode.INVALID_ARGUMENT, "This post is yours")
+                return RepostMessageResponse(success=False, message="This post is yours")
 
         original_message, err = self.message_repository.load_message(request.original_message_id)
         if err:

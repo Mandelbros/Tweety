@@ -3,6 +3,7 @@ import grpc
 from chord.node import Node
 from repository.utils import save, load, exists
 from proto.models_pb2 import User 
+import logging
 
 class AuthRepository:
     def __init__(self, node: Node) -> None:

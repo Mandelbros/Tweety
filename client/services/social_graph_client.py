@@ -52,7 +52,7 @@ async def get_followers(username, token, request = False):
         # await FileCache.set(f"{username}_followers", followers_list)
         return response.followers_list
     except grpc.RpcError as error:
-        logging.error(f"An error occurred fetching the _followers list: {error.code()}: {error.details()}")
+        logging.error(f"An error occurred fetching the followers list: {error.code()}: {error.details()}")
         return None
 
 async def get_following(username, token, request = False):
