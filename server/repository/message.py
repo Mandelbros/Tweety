@@ -3,6 +3,7 @@ import grpc
 from chord.node import Node 
 from repository.utils import save, load
 from proto.models_pb2 import Message, UserMessages
+import logging
 
 class MessageRepository:
     def __init__(self, node: Node) -> None:
@@ -13,7 +14,8 @@ class MessageRepository:
         err = save(self.node, message, path)
 
         if err:
-            return grpc.StatusCode.INTERNAL("Failed to save post: {}".format(err))
+            logging.error("Failed to save post: {}".format(err))
+            return grpc.StatusCode.INTERNAL
 
         return None
 
@@ -40,7 +42,8 @@ class MessageRepository:
         err = save(self.node, UserMessages(message_ids = list), path)
 
         if err:
-            return grpc.StatusCode.INTERNAL("Failed to save post to user: {}".format(err))
+            logging.error("Failed to save post to user: {}".format(err))
+            return grpc.StatusCode.INTERNAL
 
         return None
 
@@ -53,7 +56,8 @@ class MessageRepository:
             return list, None
 
         if err:
-            return None, grpc.StatusCode.INTERNAL("Failed to load user posts: {}".format(err))
+            logging.error("Failed to load user posts: {}".format(err))
+            return grpc.StatusCode.INTERNAL
 
         for message_id in user_messages.message_ids:
             message, err = self.load_message(message_id)

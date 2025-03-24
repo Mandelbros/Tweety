@@ -20,5 +20,5 @@ TRUE = 1
 ALIVE = 'Vivo'
 DEAD = 'Muelto'
 ARE_YOU = 'Tu ere un nodo?'
-YES_IM = 'Soy un nodo, confía'
+YES_IM = 'Soy un nodo, confia'
 EMPTY = ''

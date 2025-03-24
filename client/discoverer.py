@@ -2,7 +2,7 @@ import streamlit as st
 import socket, logging
 import grpc
 import struct
-from config import MULTICAST_GROUP, MULTICAST_PORT, TIMEOUT, ARE_YOU, YES_IM, SEPARATOR
+from config import MULTICAST_GROUP, MULTICAST_PORT, TIMEOUT, ARE_YOU, YES_IM, SEPARATOR, EMPTY
 
 MESSAGE = f"{ARE_YOU}{SEPARATOR}0".encode()
 
@@ -81,10 +81,24 @@ def is_alive(host, port, timeout=2):
         return False
     
 def discover():
-    # Crear socket UDP y ligar al puerto multicast para recibir respuestas
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    """
+    Discover a chord ring by sending a multicast announcement and waiting for a valid response.
+    
+    Returns:
+        tuple: (server_ip, leader_info) if a valid response is received.
+    
+    Raises:
+        RuntimeError: if no valid server is discovered.
+    """
+    import socket
+    import struct
+    import logging
+
     try:
+        # Crear el socket UDP y permitir reuso de dirección
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Bind al puerto multicast para recibir respuestas
         sock.bind(('', MULTICAST_PORT))
     except Exception as e:
         logging.error(f"Error al hacer bind del socket: {e}")
@@ -92,15 +106,14 @@ def discover():
 
     sock.settimeout(TIMEOUT)
 
-    # Configurar TTL para el paquete multicast
-    ttl = struct.pack('b', 1)
-    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-
-    # Deshabilitar el loopback multicast para no recibir nuestro propio mensaje
-    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
-
     try:
-        # Unirse al grupo multicast para recibir respuestas
+        # Configurar TTL para el envío multicast
+        ttl = struct.pack('b', 1)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+        # Deshabilitar loopback para no recibir nuestros propios mensajes
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
+
+        # Unirse al grupo multicast para poder recibir mensajes
         group = socket.inet_aton(MULTICAST_GROUP)
         mreq = struct.pack('4sL', group, socket.INADDR_ANY)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
@@ -116,36 +129,38 @@ def discover():
                 decoded = data.decode().strip()
                 logging.info(f"Respuesta recibida de {server}: {decoded}")
 
-                # Si se recibe el mismo mensaje de descubrimiento, se ignora
+                # Descartar eco del mensaje enviado
                 if data == MESSAGE:
                     logging.info("Recibido eco del mensaje de descubrimiento, ignorando.")
                     continue
 
-                # Parsear la respuesta usando el separador
                 parts = decoded.split(SEPARATOR)
                 if len(parts) != 2:
                     logging.info(f"Mensaje mal formado, ignorando: {decoded}")
                     continue
 
                 prefix, leader_info = parts
+                # Validamos que el mensaje tenga el prefijo correcto (YES_IM)
                 if prefix != YES_IM:
                     logging.info(f"Mensaje no válido (prefijo incorrecto): {decoded}")
                     continue
 
-                # Si la respuesta es válida, retornar la IP del servidor y la info del líder
                 logging.info(f"Respuesta válida recibida: {decoded} desde {server[0]}")
                 return server[0], leader_info
 
             except socket.timeout:
                 logging.info("Timeout esperando respuesta de servidor.")
                 break
+            except Exception as e:
+                logging.error(f"Error recibiendo mensaje: {e}")
+                return EMPTY, EMPTY, e
+
     except Exception as e:
         logging.error(f"Error durante la búsqueda de servidores: {e}")
     finally:
         sock.close()
 
     raise RuntimeError("No se encontró ningún servidor disponible.")
-
 
 def get_authenticated_channel(host, token):
     """

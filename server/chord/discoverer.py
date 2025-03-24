@@ -37,6 +37,29 @@ class Discoverer:
         self.pred_lock = pred_lock
         self.elector = elector
         self.finger = finger
+    
+    def log_network_status(self):
+        """
+        Logs the current network status, including active servers, leader, and their connections.
+        """
+        try:
+            # Log leader and its current status
+            with self.elector.leader_lock:
+                leader = self.elector.leader
+            logging.info(f"Current leader: {leader.id} at IP {leader.ip}")
+
+            # Log all active servers (successors and predecessors)
+            with self.node.succ_lock:
+                succ: NodeRef = self.node.successors.get(0)
+            with self.node.pred_lock:
+                pred: NodeRef = self.node.predecessors.get(0)
+            
+            logging.info(f"Current node {self.node.id} connections:")
+            logging.info(f"  Predecessor: {pred.id if pred else 'None'}")
+            logging.info(f"  Successor: {succ.id if succ else 'None'}")
+
+        except Exception as e:
+            logging.error(f"Error logging network status: {e}")
 
     def join(self, node_ip, leader_ip):
         """
@@ -95,8 +118,22 @@ class Discoverer:
         try:
             # Create a UDP socket
             conn = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            
+            # 🔧 Permitir reusar el puerto, necesario para compartir MULTICAST_PORT
+            conn.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+            # Configurar el TTL del mensaje multicast
             ttl = struct.pack('b', 1)
             conn.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+
+            # Enlazar al puerto multicast para recibir respuestas
+            conn.bind(('', MULTICAST_PORT))
+
+            # Unirse al grupo multicast
+            group = socket.inet_aton(MULTICAST_GROUP)
+            mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+            conn.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+
         except Exception as e:
             logging.error(f"Error configurando socket multicast: {e}")
             return EMPTY, EMPTY, e
@@ -254,6 +291,8 @@ class Discoverer:
         updated about its status in the chord ring.
         """
         while not self.node.shutdown_event.is_set():
+            # Sleep for 60 seconds before retrying
+            time.sleep(20)
             try:
                 with self.elector.leader_lock:
                     leader_id = self.elector.leader.id
@@ -277,5 +316,10 @@ class Discoverer:
                                 logging.error(f'Error uniendo nodo {node_ip}')
             except Exception as e:
                 logging.error(f'Error en proceso de descubrimiento y unión: {e}')
-            # Sleep for 60 seconds before retrying
-            time.sleep(60)
+
+            try:
+                # Existing discovery and joining logic...
+                self.log_network_status()  # Log network status after each check
+            except Exception as e:
+                logging.error(f'Error in discovery and join process: {e}')
+            
