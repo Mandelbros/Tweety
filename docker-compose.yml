@@ -7,7 +7,6 @@ services:
       dockerfile: router_base.Dockerfile
     image: router:base
     command: "echo 'router base built'"
-    # Este servicio solo se usa para construir la imagen, no necesita red.
     network_mode: none
     restart: "no"
 
@@ -22,8 +21,6 @@ services:
       - PYTHONUNBUFFERED=1
     depends_on:
       - router_base
-    # Se adjuntan tres redes; el orden (tal como se define en YAML) asigna:
-    # eth0: servers, eth1: clients, eth2: multicast.
     networks:
       servers:
         ipv4_address: 10.0.11.254
@@ -51,12 +48,10 @@ services:
       multicast: {}
     restart: always
 
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: server_app
-    # Asignamos la IP 10.0.11.10 en la red de servidores, que es la que usará el servicio.
+  # Servidores (4 servidores)
+  server1:
+    image: server:latest
+    container_name: server1
     networks:
       servers:
         ipv4_address: 10.0.11.10
@@ -64,16 +59,65 @@ services:
       - "5001:5001"
     restart: on-failure
 
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    container_name: client_app
+  server2:
+    image: server:latest
+    container_name: server2
+    networks:
+      servers:
+        ipv4_address: 10.0.11.11
+    ports:
+      - "5002:5001"
+    restart: on-failure
+
+  server3:
+    image: server:latest
+    container_name: server3
+    networks:
+      servers:
+        ipv4_address: 10.0.11.12
+    ports:
+      - "5003:5001"
+    restart: on-failure
+
+  server4:
+    image: server:latest
+    container_name: server4
+    networks:
+      servers:
+        ipv4_address: 10.0.11.13
+    ports:
+      - "5004:5001"
+    restart: on-failure
+
+  # Clientes (3 clientes)
+  client1:
+    image: client:latest
+    container_name: client1
     networks:
       clients: {}
       servers: {}
     ports:
       - "8501:8501"
+    restart: on-failure
+
+  client2:
+    image: client:latest
+    container_name: client2
+    networks:
+      clients: {}
+      servers: {}
+    ports:
+      - "8502:8501"
+    restart: on-failure
+
+  client3:
+    image: client:latest
+    container_name: client3
+    networks:
+      clients: {}
+      servers: {}
+    ports:
+      - "8503:8501"
     restart: on-failure
 
 networks:
