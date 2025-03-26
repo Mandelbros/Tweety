@@ -51,7 +51,7 @@ class Node:
 
         # Join to an existing Chord ring or create own
         self.discoverer.create_ring_or_join()
-        time.sleep(6)
+        time.sleep(CHORD_THREADS_GENERAL_DELAY)
 
         threading.Thread(target=self.finger.fix_fingers, daemon=True).start()
         threading.Thread(target=self.stabilize, daemon=True).start()
@@ -64,7 +64,7 @@ class Node:
         threading.Thread(target=self.discoverer.listen_for_announcements, daemon=True).start()
         threading.Thread(target=self.replicator.fix_storage, daemon=True).start()
         
-        time.sleep(10)
+        time.sleep(FIRST_DISCOVER_AND_JOIN_DELAY)
         threading.Thread(target=self.discoverer.discover_and_join, daemon=True).start()
         
     def get_key(self, key: str) -> str:
@@ -176,7 +176,7 @@ class Node:
                 succ = self.successors.get(0)
             logging.info(f"Predecesor: {pred}, Sucesor: {succ}")
 
-            time.sleep(10)
+            time.sleep(STABILIZE_FREQ)
 
     def notify(self, node: NodeRef) -> int:
         """
@@ -223,7 +223,7 @@ class Node:
                                 self.predecessors.erase(0)
             except Exception as e:
                 logging.error(f'Error en Hilo de revisión de predecesores: {e}')
-            time.sleep(10)
+            time.sleep(CHECK_PREDECESSOR_FREQ)
 
     def check_successor(self):
         """
@@ -248,7 +248,7 @@ class Node:
                                 self.successors.erase(0)
             except Exception as e:
                 logging.error(f'Error en Hilo de revisión de sucesor: {e}')
-            time.sleep(10)
+            time.sleep(CHECK_SUCCESSOR_FREQ)
 
     def get_successor_and_notify(self, index, ip):
         """
@@ -355,7 +355,7 @@ class Node:
                 next = self.fix_successor(next)
             except Exception as e:
                 logging.error(f'Error en Hilo de Arreglo de sucesores: {e}')
-            time.sleep(15)
+            time.sleep(FIX_SUCCESSORS_FREQ)
 
     def start_server(self):
         """

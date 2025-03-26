@@ -3,7 +3,7 @@ import time
 from typing import Dict
 from chord.storage import Data, DefaultData, Storage
 from chord.node_ref import NodeRef
-from chord.constants import FALSE, TRUE
+from chord.constants import FALSE, TRUE, FIX_STORAGE_FREQ
 from chord.bounded_list import BoundedList
 from chord.utils import encode_dict, decode_dict, getShaRepr, is_in_interval
 from chord.timer import Timer
@@ -382,4 +382,4 @@ class Replicator:
             except Exception as e:
                 logging.error(f'Error en hilo de arreglo de almacenamiento: {e}')
 
-            time.sleep(10)
+            time.sleep(FIX_STORAGE_FREQ)

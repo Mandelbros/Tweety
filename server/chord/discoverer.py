@@ -3,7 +3,7 @@ import socket
 import time
 
 from chord.node_ref import NodeRef
-from chord.constants import ARE_YOU, EMPTY, YES_IM
+from chord.constants import ARE_YOU, EMPTY, YES_IM, DISCOVER_AND_JOIN_FREQ
 from config import SEPARATOR, MULTICAST_GROUP, MULTICAST_PORT
 from chord.elector import Elector
 from chord.finger_table import FingerTable
@@ -321,6 +321,6 @@ class Discoverer:
             except Exception as e:
                 logging.error(f'Error in discovery and join process: {e}')
             
-            # Sleep for 20 seconds before retrying
-            time.sleep(20)
+            # Sleep for DISCOVER_AND_JOIN_FREQ seconds before retrying
+            time.sleep(DISCOVER_AND_JOIN_FREQ)
             

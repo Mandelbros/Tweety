@@ -3,6 +3,7 @@ import threading
 import time
 from chord.node_ref import NodeRef
 from chord.utils import is_in_interval
+from chord.constants import FIX_FINGERS_FREQ
 
 class FingerTable:
     """
@@ -129,4 +130,4 @@ class FingerTable:
 
             except Exception as e:
                 logging.error(f"Error en el Hilo de Arreglo de dedos: {e}")
-            time.sleep(5)  # Sleep for a while before the next fix attempt
+            time.sleep(FIX_FINGERS_FREQ)  # Sleep for a while before the next fix attempt
