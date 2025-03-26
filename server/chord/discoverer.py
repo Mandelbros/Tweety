@@ -291,8 +291,6 @@ class Discoverer:
         updated about its status in the chord ring.
         """
         while not self.node.shutdown_event.is_set():
-            # Sleep for 60 seconds before retrying
-            time.sleep(20)
             try:
                 with self.elector.leader_lock:
                     leader_id = self.elector.leader.id
@@ -322,4 +320,7 @@ class Discoverer:
                 self.log_network_status()  # Log network status after each check
             except Exception as e:
                 logging.error(f'Error in discovery and join process: {e}')
+            
+            # Sleep for 20 seconds before retrying
+            time.sleep(20)
             

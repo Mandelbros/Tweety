@@ -110,11 +110,11 @@ class FingerTable:
 
         while not self.node.shutdown_event.is_set():
             try:
-                self.fix_next = (self.fix_next + 1) % self.m
+                self.fix_next += 1
+                if self.fix_next >= self.m:
+                    self.fix_next = 0
 
-                # Calculate the id for which to find the successor
-                target_id = (self.node.id + 2 ** self.fix_next) % (2 ** self.m)
-                succ = self.find_successor(target_id)
+                succ = self.find_successor((self.node.id + 2 ** self.fix_next) % 2 ** self.m)
                 logging.info(f"Arreglando dedo en el índice {self.fix_next}, dedo correspondiente encontrado en {succ.id}")
 
                 with self.finger_lock:

@@ -51,8 +51,8 @@ class Node:
 
         # Join to an existing Chord ring or create own
         self.discoverer.create_ring_or_join()
+        time.sleep(6)
 
-        # Start the thread for maintaining the finger table
         threading.Thread(target=self.finger.fix_fingers, daemon=True).start()
         threading.Thread(target=self.stabilize, daemon=True).start()
         threading.Thread(target=self.check_predecessor, daemon=True).start()
@@ -61,8 +61,11 @@ class Node:
         threading.Thread(target=self.timer.update_time, daemon=True).start()
         threading.Thread(target=self.elector.check_leader, daemon=True).start()
         threading.Thread(target=self.elector.check_for_election, daemon=True).start()
-        threading.Thread(target=self.discoverer.discover_and_join, daemon=True).start()
         threading.Thread(target=self.discoverer.listen_for_announcements, daemon=True).start()
+        threading.Thread(target=self.replicator.fix_storage, daemon=True).start()
+        
+        time.sleep(10)
+        threading.Thread(target=self.discoverer.discover_and_join, daemon=True).start()
         
     def get_key(self, key: str) -> str:
         """
@@ -318,12 +321,23 @@ class Node:
                 if next_succ.id != succ.id:
                     self.successors.set(index + 1, succ)
 
+                    find = False
+                    for i in range(len(self.successors)):
+                        if succ.id == self.successors.get(i).id:
+                            find = True
+
+                    if find:
+                        self.replicator.replicate_all_data(succ)
+
                 return (index + 1) % len(self.successors)
 
             except Exception as e:
                 logging.error(f'Error arreglando sucesor {index}: {e}')
-
-            return (index + 1) % len(self.successors)
+                with self.succ_lock:
+                    self.successors.erase(index)
+                    if len(self.successors) == 0:
+                        self.successors.set(0, self.ref)
+                    return index % len(self.successors)
     
     def fix_successors(self):
         """
