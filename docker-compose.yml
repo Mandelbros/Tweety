@@ -50,9 +50,7 @@ services:
 
   # Servidores (4 servidores)
   server1:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: server:latest
     container_name: server1
     networks:
       servers:
@@ -62,9 +60,7 @@ services:
     restart: on-failure
 
   server2:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: server:latest
     container_name: server2
     networks:
       servers:
@@ -74,9 +70,7 @@ services:
     restart: on-failure
 
   server3:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: server:latest
     container_name: server3
     networks:
       servers:
@@ -86,9 +80,7 @@ services:
     restart: on-failure
 
   server4:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: server:latest
     container_name: server4
     networks:
       servers:
@@ -99,9 +91,7 @@ services:
 
   # Clientes (3 clientes)
   client1:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
+    image: client:latest
     container_name: client1
     networks:
       clients: {}
@@ -111,9 +101,7 @@ services:
     restart: on-failure
 
   client2:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
+    image: client:latest
     container_name: client2
     networks:
       clients: {}
@@ -123,9 +111,7 @@ services:
     restart: on-failure
 
   client3:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
+    image: client:latest
     container_name: client3
     networks:
       clients: {}
