@@ -12,10 +12,13 @@ from repository.auth import AuthRepository
 from repository.message import MessageRepository
 from repository.social_graph import SocialGraphRepository
 from config import PORT
+import time
 
 def run_services():
     ip = socket.gethostbyname(socket.gethostname())
     node = Node(ip, PORT)
+
+    time.sleep(10)
 
     auth_repository = AuthRepository(node) 
     message_repository = MessageRepository(node) 

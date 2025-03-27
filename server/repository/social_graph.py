@@ -3,6 +3,7 @@ import grpc
 from chord.node import Node
 from repository.utils import save, load, delete, exists
 from proto.models_pb2 import UserFollowing, UserFollowers
+import logging
 
 class SocialGraphRepository:
     def __init__(self, node: Node) -> None:
@@ -16,7 +17,8 @@ class SocialGraphRepository:
             return list, None
 
         if err:
-            return None, grpc.StatusCode.INTERNAL("Failed to load following list: {}".format(err))
+            logging.error("Failed to load following list: {}".format(err))
+            return None, grpc.StatusCode.INTERNAL
 
         for user_id in user_following.following_list: 
             list.append(user_id)
@@ -30,7 +32,8 @@ class SocialGraphRepository:
             return list, None
 
         if err:
-            return None, grpc.StatusCode.INTERNAL("Failed to load followers list: {}".format(err))
+            logging.error("Failed to load followers list: {}".format(err))
+            return None, grpc.StatusCode.INTERNAL
 
         for user_id in user_followers.followers_list: 
             list.append(user_id)
@@ -48,7 +51,8 @@ class SocialGraphRepository:
             err = save(self.node, UserFollowing(following_list = list), path)
 
             if err:
-                return False, grpc.StatusCode.INTERNAL("Failed to save following list: {}".format(err))
+                logging.error("Failed to save following list: {}".format(err))
+                return False, grpc.StatusCode.INTERNAL
 
             return True, None
 
@@ -68,7 +72,8 @@ class SocialGraphRepository:
             err = save(self.node, UserFollowing(following_list = list), path)
 
             if err:
-                return False, grpc.StatusCode.INTERNAL("Failed to save following list: {}".format(err))
+                logging.error("Failed to save following list: {}".format(err))
+                return False, grpc.StatusCode.INTERNAL
 
             return True, None
 
@@ -88,7 +93,8 @@ class SocialGraphRepository:
             err = save(self.node, UserFollowers(followers_list = list), path)
 
             if err:
-                return False, grpc.StatusCode.INTERNAL("Failed to save followers list: {}".format(err))
+                logging.error("Failed to save followers list: {}".format(err))
+                return False, grpc.StatusCode.INTERNAL
 
             return True, None
 
@@ -108,7 +114,8 @@ class SocialGraphRepository:
             err = save(self.node, UserFollowers(followers_list = list), path)
 
             if err:
-                return False, grpc.StatusCode.INTERNAL("Failed to save followers list: {}".format(err))
+                logging.error("Failed to save followers list: {}".format(err))
+                return False, grpc.StatusCode.INTERNAL
 
             return True, None
 

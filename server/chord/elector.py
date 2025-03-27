@@ -4,6 +4,7 @@ import time
 from chord.timer import Timer
 from chord.node_ref import NodeRef
 from config import SEPARATOR
+from chord.constants import CHECK_LEADER_FREQ, CHECK_FOR_ELECTION_FREQ
 
 class Elector:
     """
@@ -66,8 +67,8 @@ class Elector:
                         logging.error(f"Líder {self.leader.id} falló: {e}")
                         # Trigger election if the leader fails
                         self.call_for_election()
-            # Sleep for 10 seconds before checking again
-            time.sleep(10)
+            # Sleep for CHECK_LEADER_FREQ seconds before checking again
+            time.sleep(CHECK_LEADER_FREQ)
 
     def call_for_election(self):
         """
@@ -164,5 +165,5 @@ class Elector:
                     self.call_for_election()
             except Exception as e:
                 logging.error(f'Error en Hilo de Elección: {e}')
-            # Sleep for 60 seconds before the next election check
-            time.sleep(60)
+            # Sleep for CHECK_FOR_ELECTION_FREQ seconds before the next election check
+            time.sleep(CHECK_FOR_ELECTION_FREQ)

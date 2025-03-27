@@ -3,6 +3,7 @@ import threading
 import time
 from chord.node_ref import NodeRef
 from chord.utils import is_in_interval
+from chord.constants import FIX_FINGERS_FREQ
 
 class FingerTable:
     """
@@ -110,11 +111,11 @@ class FingerTable:
 
         while not self.node.shutdown_event.is_set():
             try:
-                self.fix_next = (self.fix_next + 1) % self.m
+                self.fix_next += 1
+                if self.fix_next >= self.m:
+                    self.fix_next = 0
 
-                # Calculate the id for which to find the successor
-                target_id = (self.node.id + 2 ** self.fix_next) % (2 ** self.m)
-                succ = self.find_successor(target_id)
+                succ = self.find_successor((self.node.id + 2 ** self.fix_next) % 2 ** self.m)
                 logging.info(f"Arreglando dedo en el índice {self.fix_next}, dedo correspondiente encontrado en {succ.id}")
 
                 with self.finger_lock:
@@ -129,4 +130,4 @@ class FingerTable:
 
             except Exception as e:
                 logging.error(f"Error en el Hilo de Arreglo de dedos: {e}")
-            time.sleep(5)  # Sleep for a while before the next fix attempt
+            time.sleep(FIX_FINGERS_FREQ)  # Sleep for a while before the next fix attempt

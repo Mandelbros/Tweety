@@ -124,7 +124,10 @@ def relationships_view():
                 st.success(f"You are now following {user_to_follow}.")
                 st.rerun()
             else:
-                st.error(f"Failed to follow the user. {response.message}")
+                if response:
+                    st.error(f"Failed to follow the user. {response.message}")
+                else:
+                    st.error(f"Failed to follow the user.")
     elif option == "View Followers":
         token = st.session_state['token']
         response = asyncio.run(get_followers(st.session_state.logged_in_user, token))

@@ -1,3 +1,4 @@
 grpcio
-protobuf
+grpcio-tools
+protobuf==5.29.4
 PyJWT

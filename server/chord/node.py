@@ -51,8 +51,8 @@ class Node:
 
         # Join to an existing Chord ring or create own
         self.discoverer.create_ring_or_join()
+        time.sleep(CHORD_THREADS_GENERAL_DELAY)
 
-        # Start the thread for maintaining the finger table
         threading.Thread(target=self.finger.fix_fingers, daemon=True).start()
         threading.Thread(target=self.stabilize, daemon=True).start()
         threading.Thread(target=self.check_predecessor, daemon=True).start()
@@ -61,8 +61,11 @@ class Node:
         threading.Thread(target=self.timer.update_time, daemon=True).start()
         threading.Thread(target=self.elector.check_leader, daemon=True).start()
         threading.Thread(target=self.elector.check_for_election, daemon=True).start()
-        threading.Thread(target=self.discoverer.discover_and_join, daemon=True).start()
         threading.Thread(target=self.discoverer.listen_for_announcements, daemon=True).start()
+        threading.Thread(target=self.replicator.fix_storage, daemon=True).start()
+        
+        time.sleep(FIRST_DISCOVER_AND_JOIN_DELAY)
+        threading.Thread(target=self.discoverer.discover_and_join, daemon=True).start()
         
     def get_key(self, key: str) -> str:
         """
@@ -173,7 +176,7 @@ class Node:
                 succ = self.successors.get(0)
             logging.info(f"Predecesor: {pred}, Sucesor: {succ}")
 
-            time.sleep(10)
+            time.sleep(STABILIZE_FREQ)
 
     def notify(self, node: NodeRef) -> int:
         """
@@ -220,7 +223,7 @@ class Node:
                                 self.predecessors.erase(0)
             except Exception as e:
                 logging.error(f'Error en Hilo de revisión de predecesores: {e}')
-            time.sleep(10)
+            time.sleep(CHECK_PREDECESSOR_FREQ)
 
     def check_successor(self):
         """
@@ -245,7 +248,7 @@ class Node:
                                 self.successors.erase(0)
             except Exception as e:
                 logging.error(f'Error en Hilo de revisión de sucesor: {e}')
-            time.sleep(10)
+            time.sleep(CHECK_SUCCESSOR_FREQ)
 
     def get_successor_and_notify(self, index, ip):
         """
@@ -318,12 +321,23 @@ class Node:
                 if next_succ.id != succ.id:
                     self.successors.set(index + 1, succ)
 
+                    find = False
+                    for i in range(len(self.successors)):
+                        if succ.id == self.successors.get(i).id:
+                            find = True
+
+                    if find:
+                        self.replicator.replicate_all_data(succ)
+
                 return (index + 1) % len(self.successors)
 
             except Exception as e:
                 logging.error(f'Error arreglando sucesor {index}: {e}')
-
-            return (index + 1) % len(self.successors)
+                with self.succ_lock:
+                    self.successors.erase(index)
+                    if len(self.successors) == 0:
+                        self.successors.set(0, self.ref)
+                    return index % len(self.successors)
     
     def fix_successors(self):
         """
@@ -341,7 +355,7 @@ class Node:
                 next = self.fix_successor(next)
             except Exception as e:
                 logging.error(f'Error en Hilo de Arreglo de sucesores: {e}')
-            time.sleep(15)
+            time.sleep(FIX_SUCCESSORS_FREQ)
 
     def start_server(self):
         """

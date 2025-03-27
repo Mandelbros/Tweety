@@ -3,7 +3,7 @@ import time
 from typing import Dict
 from chord.storage import Data, DefaultData, Storage
 from chord.node_ref import NodeRef
-from chord.constants import FALSE, TRUE
+from chord.constants import FALSE, TRUE, FIX_STORAGE_FREQ
 from chord.bounded_list import BoundedList
 from chord.utils import encode_dict, decode_dict, getShaRepr, is_in_interval
 from chord.timer import Timer
@@ -345,3 +345,41 @@ class Replicator:
         with self.storage.storage_lock:
             self.storage.set_all(new_res_dict)
             self.storage.remove_all(res_removed_dict)
+
+    def fix_storage(self):
+        while True:
+            try:
+                logging.info('Arreglando almacenamiento')
+
+                with self.storage.storage_lock:
+                    dict, _ = self.storage.get_all()
+                    logging.info(f'Longitud actual de almacenamiento: {len(dict)}')
+
+                with self.node.succ_lock:
+                    succ_len = len(self.node.successors)
+
+                with self.node.pred_lock:
+                    while len(self.node.predecessors) > succ_len:
+                        self.node.predecessors.erase(len(self.node.predecessors) - 1)
+                        if len(self.node.predecessors) == 0:
+                            self.node.predecessors.set(0, self.node.ref)
+                            break
+
+                with self.node.pred_lock:
+                    pred: NodeRef = self.node.predecessors.get(len(self.node.predecessors) - 1)
+
+                if pred.id != self.node.id:
+                    pred_pred = pred.pred
+
+                    if pred_pred.id != self.node.id and pred_pred.id != pred.id:
+                        with self.timer.time_lock:
+                            time_c = self.timer.time_counter
+                        for key in dict.keys():
+                            if is_in_interval(getShaRepr(key), pred_pred.id, self.node.id):
+                                continue
+
+                            self.storage.remove(key, time_c, False)
+            except Exception as e:
+                logging.error(f'Error en hilo de arreglo de almacenamiento: {e}')
+
+            time.sleep(FIX_STORAGE_FREQ)

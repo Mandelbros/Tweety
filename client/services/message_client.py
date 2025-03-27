@@ -9,7 +9,7 @@ import logging
 
 async def get_messages(username, token, request=True):
     # if not request:
-    #     cached_posts = await FileCache.get(f"{username}_posts", default=None)
+    #     cached_posts = await FileCache.get(f"{username}_posts")
     #     if cached_posts is not None:
     #         value = [models_pb2.Message.FromString(v) for v in cached_posts]
     #         return value
