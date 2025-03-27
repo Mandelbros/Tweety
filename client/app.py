@@ -5,8 +5,34 @@ import asyncio
 from services.auth_client import register, login
 from services.social_graph_client import follow_user, unfollow_user, get_followers, get_following
 from services.message_client import post_message, get_messages, repost_message
+import logging
 
 MAX_MESSAGE_LENGTH = 300  # Define the maximum length for messages
+
+async def update_cache():
+    if 'logged_in_user' not in st.session_state:
+        st.session_state.logged_in_user = None
+
+    user = st.session_state.logged_in_user
+    if not user:
+        logging.info("No storage to update. No user found.")
+        return
+
+    if 'token' not in st.session_state:
+        logging.error("Token not found in session state.")
+        return
+
+    token = st.session_state['token']
+
+    try:
+        await get_messages(user, token, request=True)
+        await get_followers(user, token, request=True)
+        users_following = await get_following(user, token, request=True)
+        logging.info("cache updateada colega")  
+        for user in users_following:
+            await get_messages(user, token, request=True)
+    except Exception as e:
+        logging.error(f"Error updating storage: {str(e)}") 
 
 # Initialize session state variables
 if "logged_in_user" not in st.session_state:
@@ -77,6 +103,7 @@ def handle_login(username, password):
     if token:
         st.session_state.logged_in_user = username  # Store the logged-in user
         st.session_state['token'] = token
+        asyncio.run(update_cache())
         switch_view("relationships")  # Change to relationships view
         st.rerun()
     else:
@@ -122,12 +149,10 @@ def relationships_view():
             response = follow_user(st.session_state.logged_in_user, user_to_follow, token)
             if response and response.success:
                 st.success(f"You are now following {user_to_follow}.")
+                asyncio.run(update_cache()) 
                 st.rerun()
             else:
-                if response:
-                    st.error(f"Failed to follow the user. {response.message}")
-                else:
-                    st.error(f"Failed to follow the user.")
+                st.error(f"Failed to follow the user. {response.message}")
     elif option == "View Followers":
         token = st.session_state['token']
         response = asyncio.run(get_followers(st.session_state.logged_in_user, token))
@@ -248,8 +273,10 @@ def message_view():
         submitted = st.form_submit_button("Post 🚀")
         if submitted:
             response = post_message(st.session_state.logged_in_user, content, token)
+
             if response and response.success:
                 refresh_messages()
+                asyncio.run(update_cache())
                 st.success(response.message)
             else:
                 msg = ""
@@ -259,6 +286,7 @@ def message_view():
 
     if st.button("🔄 Refresh Messages"):
         refresh_messages()
+        asyncio.run(update_cache())
     
     # Ensure session state has a list of messages
     if "messages" in st.session_state:
@@ -283,6 +311,7 @@ def message_view():
         if repost_response and repost_response.success:
             st.success("Message reposted successfully!")
             st.session_state.repost_clicked = False
+            asyncio.run(update_cache())
             st.rerun()
         else:
             msg = ""

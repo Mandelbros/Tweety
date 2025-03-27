@@ -6,13 +6,14 @@ from config import MESSAGE
 from discoverer import get_host, get_authenticated_channel
 from proto import models_pb2
 import logging
+import base64
 
 async def get_messages(username, token, request=True):
-    # if not request:
-    #     cached_posts = await FileCache.get(f"{username}_posts")
-    #     if cached_posts is not None:
-    #         value = [models_pb2.Message.FromString(v) for v in cached_posts]
-    #         return value
+    if not request:
+        cached_posts = await FileCache.get(f"{username}_posts")
+        if cached_posts is not None:
+            value = [models_pb2.Message.FromString(base64.b64decode(v)) for v in cached_posts]
+            return value
         
     host = get_host(MESSAGE)
     channel = get_authenticated_channel(host, token)
@@ -25,8 +26,8 @@ async def get_messages(username, token, request=True):
         for message in response.messages:
             new_message = models_pb2.Message( message_id = message.message_id, user_id = message.user_id, content = message.content, timestamp = message.timestamp, is_repost = message.is_repost, original_message_id = message.original_message_id)
             new_messages.append(new_message)
-        serialized_value = [v.SerializeToString() for v in new_messages]   
-        # await FileCache.set(f"{username}_posts", serialized_value)
+        serialized_value = [base64.b64encode(v.SerializeToString()).decode('utf-8') for v in new_messages]   
+        await FileCache.set(f"{username}_posts", serialized_value)              ###
         return response
     except grpc.RpcError as error:
         logging.error(f"An error occurred fetching user posts: {error.code()}: {error.details()}")
