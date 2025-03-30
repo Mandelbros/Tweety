@@ -13,4 +13,4 @@ HEALTHCHECK CMD curl --fail http://localhost:8501 || exit 1
 
 RUN chmod +x ./startup.sh
 
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["./startup.sh"]

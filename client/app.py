@@ -2,12 +2,15 @@ import streamlit as st
 from datetime import datetime, timezone
 import markdown
 import asyncio
+import logging
 from services.auth_client import register, login
 from services.social_graph_client import follow_user, unfollow_user, get_followers, get_following
 from services.message_client import post_message, get_messages, repost_message
-import logging
+from config import SEPARATOR
 
-MAX_MESSAGE_LENGTH = 300  # Define the maximum length for messages
+MIN_USERNAME_LENGTH = 3
+MAX_USERNAME_LENGTH = 40
+MAX_MESSAGE_LENGTH = 3000  # Define the maximum length for messages
 
 async def update_cache():
     if 'logged_in_user' not in st.session_state:
@@ -99,6 +102,9 @@ def user_stats():
 
 # Function to handle login
 def handle_login(username, password):
+    if SEPARATOR in username:
+        st.error(f"Username cannot contain '{SEPARATOR}'.")
+        return
     token = login(username, password)
     if token:
         st.session_state.logged_in_user = username  # Store the logged-in user
@@ -111,6 +117,15 @@ def handle_login(username, password):
 
 # Function to handle registration
 def handle_register(username, email, name, password):
+    if SEPARATOR in username:
+        st.error(f"Username cannot contain '{SEPARATOR}'.")
+        return
+    if len(username) < MIN_USERNAME_LENGTH:
+        st.error(f"Username must have at least {MIN_USERNAME_LENGTH} characters.")
+        return
+    if len(username) > MAX_USERNAME_LENGTH:
+        st.error(f"Username can have at most {MAX_USERNAME_LENGTH} characters.")
+        return
     response = register(username, email, name, password)
     if response and response.success:
         st.success("Registration successful! Please log in.")
@@ -146,13 +161,16 @@ def relationships_view():
         user_to_follow = st.text_input("Enter username to follow")
         token = st.session_state['token']
         if st.button("👉 Follow"):
-            response = follow_user(st.session_state.logged_in_user, user_to_follow, token)
-            if response and response.success:
-                st.success(f"You are now following {user_to_follow}.")
-                asyncio.run(update_cache()) 
-                st.rerun()
+            if SEPARATOR in user_to_follow:
+                st.error(f"Username cannot contain '{SEPARATOR}'.")
             else:
-                st.error(f"Failed to follow the user. {response.message}")
+                response = follow_user(st.session_state.logged_in_user, user_to_follow, token)
+                if response and response.success:
+                    st.success(f"You are now following {user_to_follow}.")
+                    asyncio.run(update_cache()) 
+                    st.rerun()
+                else:
+                    st.error(f"Failed to follow the user. {response.message}")
     elif option == "View Followers":
         token = st.session_state['token']
         response = asyncio.run(get_followers(st.session_state.logged_in_user, token))
@@ -260,12 +278,19 @@ def message_view():
     refresh_messages()
 
     token = st.session_state['token']
+    response_followers = asyncio.run(get_followers(st.session_state.logged_in_user, token))
+    
+    if response_followers is not None:
+        followers = len(response_followers)
+    else:
+        followers = 0
+        st.error("Failed to retrieve amount of followers.")
     
     # Text area for writing a new message
     with st.form("post_form"):
         content = st.text_area(
             "Write a message:",
-            max_chars=MAX_MESSAGE_LENGTH,
+            max_chars = min(MAX_MESSAGE_LENGTH, (followers + 1) * 300),
             placeholder="What's on your mind?",
         )
         submitted = st.form_submit_button("Post 🚀")
