@@ -2,11 +2,11 @@ from services.auth import start_auth
 from services.social_graph import start_social_graph_service
 from services.message import start_message_service
 import threading
-import atexit
 import time
 import signal
 import sys
 import socket
+import logging
 from chord.node import Node
 from repository.auth import AuthRepository
 from repository.message import MessageRepository
@@ -17,6 +17,7 @@ import time
 def run_services():
     ip = socket.gethostbyname(socket.gethostname())
     node = Node(ip, PORT)
+    logging.info(f"Servidor iniciado con IP: {ip}")
 
     time.sleep(10)
 

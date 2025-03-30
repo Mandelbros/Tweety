@@ -3,7 +3,7 @@ import socket
 from typing import List, Tuple
 
 from chord.constants import *
-from chord.utils import getShaRepr
+from chord.utils import getShaRepr, send_message, recv_message
 from chord.storage import Data
 from config import PORT, SEPARATOR
 
@@ -35,8 +35,9 @@ class NodeRef:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(3)
                 s.connect((self.ip, int(self.port)))
-                s.sendall(f'{op}{SEPARATOR}{data}'.encode('utf-8'))
-                return s.recv(1024)
+                message = f'{op}{SEPARATOR}{data}'.encode('utf-8')
+                send_message(s, message)
+                return recv_message(s)
         except Exception as e:
             logging.error(f"Error enviando dato a {self.ip}: {e}, operación: {op}, dato: {data}")
             return b''

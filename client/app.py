@@ -1,6 +1,6 @@
 import streamlit as st
 from datetime import datetime, timezone
-import pytz
+import markdown
 import asyncio
 from services.auth_client import register, login
 from services.social_graph_client import follow_user, unfollow_user, get_followers, get_following
@@ -187,7 +187,9 @@ def format_date_time(iso_timestamp):
         return iso_timestamp  # fallback in case of error
 
 def display_message(msg):
-    # Format timestamps using your format_date_time function
+    # Convertir el contenido markdown a HTML
+    msg_html = markdown.markdown(msg.content)
+    
     if msg.is_repost:
         repost_time = format_date_time(msg.timestamp)
         original_time = format_date_time(msg.original_message_timestamp)
@@ -204,12 +206,8 @@ def display_message(msg):
                             <small>from {original_time}</small>
                         </td>
                     </tr>
-                    <tr style="border: none;">
-                        <td colspan="2" style="border: none; padding: 0; margin: 0; padding-top:8px; color:#ccc; line-height:1.4;">
-                            “{msg.content}”
-                        </td>
-                    </tr>
                 </table>
+                <div style="margin-top: 12px;">{msg_html}</div>
             </div>
             <div style="text-align:right; margin-top:8px;">
                 <small style="color:gray;">{repost_time}</small>
@@ -225,7 +223,7 @@ def display_message(msg):
                 <h5 style="margin:0; color:white;">{msg.user_id}</h5>
                 <span style="font-size:0.85em; color:gray;">{timestamp}</span>
             </div>
-            <p style="color:#ddd; margin-top:10px; margin-bottom:0;">“{msg.content}”</p>
+            <div style="margin-top: 12px;">{msg_html}</div>
         </div>
         """
         st.markdown(html, unsafe_allow_html=True)

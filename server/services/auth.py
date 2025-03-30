@@ -59,8 +59,7 @@ class AuthService(AuthServiceServicer):
 def start_auth(address, auth_repository: AuthRepository):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_AuthServiceServicer_to_server(AuthService(auth_repository, SECRET_KEY), server)
-   
     server.add_insecure_port(address)
     server.start()
-    print("Auth server started or port 5001")    ### loggin remove
+    logging.info("Auth service started or port 5001")    ### loggin remove
     server.wait_for_termination()

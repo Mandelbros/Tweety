@@ -3,7 +3,7 @@ import threading
 import socket
 import time
 
-from chord.utils import decode_dict, getShaRepr, is_in_interval
+from chord.utils import decode_dict, getShaRepr, is_in_interval, send_message, recv_message
 from chord.node_ref import NodeRef
 from chord.bounded_list import BoundedList
 from chord.finger_table import FingerTable
@@ -49,9 +49,10 @@ class Node:
         self.discoverer = Discoverer(self, self.succ_lock, self.pred_lock, self.elector, self.finger)
         self.replicator = Replicator(self, self.timer)
 
+        time.sleep(CHORD_THREADS_GENERAL_DELAY)
+        
         # Join to an existing Chord ring or create own
         self.discoverer.create_ring_or_join()
-        time.sleep(CHORD_THREADS_GENERAL_DELAY)
 
         threading.Thread(target=self.finger.fix_fingers, daemon=True).start()
         threading.Thread(target=self.stabilize, daemon=True).start()
@@ -364,7 +365,7 @@ class Node:
         The server listens for connections and processes different types of operations.
         Operations include key retrieval, key storage, election, and more.
         """
-        logging.info('Iniciando Hilo Principal del servidor y escuchando a conecciones...')
+        logging.info('Iniciando Hilo Principal del servidor y escuchando a conexiones...')
         
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -376,7 +377,9 @@ class Node:
                     conn, addr = s.accept()
                     logging.info(f'Nueva conexión de {addr}')
 
-                    data = conn.recv(1024).decode().split(SEPARATOR)
+                    # Receive the whole message
+                    raw_data = recv_message(conn)
+                    data = raw_data.decode('utf-8').split(SEPARATOR)
 
                     option = int(data[0])
                     logging.info(f'Operación {option} recibida de {addr}')
@@ -440,12 +443,12 @@ class Node:
                         
                     # Prepare the response to send to the client
                     if data_response:
-                        response = f'{data_response.id}{SEPARATOR}{data_response.ip}'.encode()
+                        response = f'{data_response.id}{SEPARATOR}{data_response.ip}'.encode('utf-8')
                     else:
-                        response = f'{server_response}'.encode()
+                        response = f'{server_response}'.encode('utf-8')
 
                     logging.info(f'Enviando respuesta: {response}')
-                    conn.sendall(response)
+                    send_message(conn, response)
                     conn.close()
 
                 except Exception as e:

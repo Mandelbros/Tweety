@@ -1,6 +1,8 @@
 import hashlib
 import logging
 import json
+import struct
+import socket
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s -- %(levelname)s -- %(message)s')
 
@@ -65,3 +67,33 @@ def decode_dict(json_str: str) -> dict:
     except (TypeError, ValueError) as e:
         logging.error(f"Fallo al decodificar cadena JSON: {e}")
         return {}
+    
+def send_message(sock: socket.socket, message: bytes):
+    """
+    Sends a message prefixing its length to 4 bytes.
+    """
+    msg_length = struct.pack('!I', len(message))
+    sock.sendall(msg_length + message)
+
+def recvall(sock: socket.socket, n: int) -> bytes:
+    """
+    Reads exactly n bytes from the socket.
+    """
+    data = b''
+    while len(data) < n:
+        packet = sock.recv(n - len(data))
+        if not packet:
+            break  # If nothing more is received, the accumulated data is returned
+        data += packet
+    return data
+
+def recv_message(sock: socket.socket) -> bytes:
+    """
+    Receives a complete message. First, reads the header (4 bytes), 
+    which indicates the size, and then reads that number of bytes.
+    """
+    raw_msglen = recvall(sock, 4)
+    if not raw_msglen:
+        return b''
+    msglen = struct.unpack('!I', raw_msglen)[0]
+    return recvall(sock, msglen)

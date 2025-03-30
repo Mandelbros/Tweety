@@ -79,11 +79,9 @@ class MessageService(MessageServiceServicer):
     # def DeleteMessage(self, request, context):
 
 def start_message_service(address, message_repository: MessageRepository, auth_repository: AuthRepository):
-    logging.info("Post service started")
-
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_MessageServiceServicer_to_server(MessageService(message_repository,auth_repository), server)
     server.add_insecure_port(address)
     server.start()
-    # print("Message service started on port 5003")
+    logging.info("Message service started on port 5003")
     server.wait_for_termination()

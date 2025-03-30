@@ -208,13 +208,11 @@ class Replicator:
 
         # Filter the data to be replicated based on valid range
         for key, data in dict.items():
-            if is_in_interval(getShaRepr(key), pred.id, self.node.id):
-                new_dict[key] = data.value
-                new_version[key] = data.version
+            new_dict[key] = data.value
+            new_version[key] = data.version
 
         for key, data in removed_dict.items():
-            if is_in_interval(getShaRepr(key), pred.id, self.node.id):
-                new_removed_dict[key] = data.version
+            new_removed_dict[key] = data.version
 
         # Attempt to replicate the data to the given node
         ok = node.set_partition(encode_dict(new_dict), encode_dict(new_version), encode_dict(new_removed_dict))
@@ -314,16 +312,10 @@ class Replicator:
 
         # Filter data to be delegated to the new predecessor
         for key, data in dict.items():
-            if not is_in_interval(getShaRepr(key), pred_pred.id, pred.id):
-                continue
-
             new_dict[key] = data.value
             new_version[key] = data.version
 
         for key, data in remove.items():
-            if not is_in_interval(getShaRepr(key), pred_pred.id, pred.id):
-                continue
-
             new_removed_dict[key] = data.version
 
         # Resolve and set the data in the new predecessor
@@ -365,20 +357,6 @@ class Replicator:
                             self.node.predecessors.set(0, self.node.ref)
                             break
 
-                with self.node.pred_lock:
-                    pred: NodeRef = self.node.predecessors.get(len(self.node.predecessors) - 1)
-
-                if pred.id != self.node.id:
-                    pred_pred = pred.pred
-
-                    if pred_pred.id != self.node.id and pred_pred.id != pred.id:
-                        with self.timer.time_lock:
-                            time_c = self.timer.time_counter
-                        for key in dict.keys():
-                            if is_in_interval(getShaRepr(key), pred_pred.id, self.node.id):
-                                continue
-
-                            self.storage.remove(key, time_c, False)
             except Exception as e:
                 logging.error(f'Error en hilo de arreglo de almacenamiento: {e}')
 

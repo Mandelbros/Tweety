@@ -101,6 +101,6 @@ def start_social_graph_service(address, social_graph_repository:SocialGraphRepos
     add_SocialGraphServiceServicer_to_server(SocialGraphService(social_graph_repository, auth_repository), server)
     server.add_insecure_port(address)
     server.start()
-    logging.info("Social Graph Service started on port 5002")
+    logging.info("Social Graph service started on port 5002")
     server.wait_for_termination()
 

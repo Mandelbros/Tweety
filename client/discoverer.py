@@ -33,9 +33,8 @@ def get_host(service):
 
     if not server or not is_alive(server, int(service)):
         update_server()
+        logging.info(f"Nueva conexión a {server}:{service}")
         server = st.session_state["server"]
-
-    logging.info(f"AAAAAAAAAAAAAAA {server}")
 
     if server and is_alive(server, int(service)):
         return f"{server}:{service}"
@@ -53,10 +52,10 @@ def update_server():
     """
     server = discover()
     if server:
-        logging.info(f"Discoverer found {server}")
+        logging.info(f"Discoverer encontró {server}")
         st.session_state['server'] = server[1]
     else:
-        logging.info("No servers found")
+        logging.info("Ningún servidor encontrado")
 
         if st.session_state.get('server'):
             del st.session_state['server']
@@ -76,11 +75,11 @@ def is_alive(host, port, timeout=10):
     Returns:
         bool: True if the server is alive, False otherwise.
     """
-    logging.info(host)
     if not host:
         return False
     try:
         with socket.create_connection((host, port), timeout=timeout):
+            logging.info(f"{host}:{port} está vivo")
             return True
     except (socket.timeout, ConnectionRefusedError, OSError):
         return False
@@ -95,10 +94,6 @@ def discover():
     Raises:
         RuntimeError: if no valid server is discovered.
     """
-    import socket
-    import struct
-    import logging
-
     try:
         # Crear el socket UDP y permitir reuso de dirección
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)

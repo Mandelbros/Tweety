@@ -35,7 +35,7 @@ def unfollow_user(follower_id, followed_id, token):
         logging.error(f"An error occurred unfollowing the user: {error.code()}: {error.details()}")
         return False
 
-async def get_followers(username, token, request = False):
+async def get_followers(username, token, request = True):
     if not request:
         cached_followers = await FileCache.get(f"{username}_followers")
         if cached_followers is not None:
@@ -55,7 +55,7 @@ async def get_followers(username, token, request = False):
         logging.error(f"An error occurred fetching the followers list: {error.code()}: {error.details()}")
         return None
 
-async def get_following(username, token, request = False):
+async def get_following(username, token, request = True):
     if not request:
         cached_following = await FileCache.get(f"{username}_following")
         if cached_following is not None:
