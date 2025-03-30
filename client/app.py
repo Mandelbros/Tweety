@@ -5,7 +5,7 @@ import asyncio
 import logging
 from services.auth_client import register, login
 from services.social_graph_client import follow_user, unfollow_user, get_followers, get_following
-from services.message_client import post_message, get_messages, repost_message
+from services.message_client import post_message, repost_message, get_messages, get_message_ids, get_message
 from config import SEPARATOR
 
 MIN_USERNAME_LENGTH = 3
@@ -109,7 +109,7 @@ def handle_login(username, password):
     if token:
         st.session_state.logged_in_user = username  # Store the logged-in user
         st.session_state['token'] = token
-        asyncio.run(update_cache())
+        # asyncio.run(update_cache())
         switch_view("relationships")  # Change to relationships view
         st.rerun()
     else:
@@ -167,7 +167,7 @@ def relationships_view():
                 response = follow_user(st.session_state.logged_in_user, user_to_follow, token)
                 if response and response.success:
                     st.success(f"You are now following {user_to_follow}.")
-                    asyncio.run(update_cache()) 
+                    # asyncio.run(update_cache()) 
                     st.rerun()
                 else:
                     st.error(f"Failed to follow the user. {response.message}")
@@ -256,15 +256,29 @@ def refresh_messages():
     else:
         st.error("Failed to retrieve following list.")
 
+    # messages = []
+    # for user in users:
+    #     response = asyncio.run(get_messages(user, token))
+    #     if response:
+    #         # Store the messages in session state to persist them across renders
+    #         for msg in response.messages:
+    #             messages.append(msg)
+    #     else:
+    #         st.error(f"Failed to load messages of user {user}.")
+
     messages = []
     for user in users:
-        response = asyncio.run(get_messages(user, token))
-        if response:
+        response_ids = asyncio.run(get_message_ids(user, token))
+        if response_ids:
             # Store the messages in session state to persist them across renders
-            for msg in response.messages:
-                messages.append(msg)
+            for message_id in response_ids.message_ids:
+                response_msg = asyncio.run(get_message(message_id, token))
+                if response_msg:
+                    messages.append(response_msg.message)
+                else:
+                    st.error(f"Failed to load message {message_id}.")
         else:
-            st.error(f"Failed to load messages of user {user}.")
+            st.error(f"Failed to load message IDs of user {user}.")
 
     # Ordenar mensajes por fecha de más reciente a más antiguo
     from datetime import datetime
@@ -299,7 +313,7 @@ def message_view():
 
             if response and response.success:
                 refresh_messages()
-                asyncio.run(update_cache())
+                # asyncio.run(update_cache())
                 st.success(response.message)
             else:
                 msg = ""
@@ -309,7 +323,7 @@ def message_view():
 
     if st.button("🔄 Refresh Messages"):
         refresh_messages()
-        asyncio.run(update_cache())
+        # asyncio.run(update_cache())
     
     # Ensure session state has a list of messages
     if "messages" in st.session_state:
@@ -334,7 +348,7 @@ def message_view():
         if repost_response and repost_response.success:
             st.success("Message reposted successfully!")
             st.session_state.repost_clicked = False
-            asyncio.run(update_cache())
+            # asyncio.run(update_cache())
             st.rerun()
         else:
             msg = ""

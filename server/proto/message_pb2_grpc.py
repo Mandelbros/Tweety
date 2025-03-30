@@ -44,6 +44,16 @@ class MessageServiceStub(object):
                 request_serializer=message__pb2.GetMessagesRequest.SerializeToString,
                 response_deserializer=message__pb2.GetMessagesResponse.FromString,
                 _registered_method=True)
+        self.GetMessageIDs = channel.unary_unary(
+                '/tweety.MessageService/GetMessageIDs',
+                request_serializer=message__pb2.GetMessageIDsRequest.SerializeToString,
+                response_deserializer=message__pb2.GetMessageIDsResponse.FromString,
+                _registered_method=True)
+        self.GetMessage = channel.unary_unary(
+                '/tweety.MessageService/GetMessage',
+                request_serializer=message__pb2.GetMessageRequest.SerializeToString,
+                response_deserializer=message__pb2.GetMessageResponse.FromString,
+                _registered_method=True)
         self.RepostMessage = channel.unary_unary(
                 '/tweety.MessageService/RepostMessage',
                 request_serializer=message__pb2.RepostMessageRequest.SerializeToString,
@@ -61,6 +71,18 @@ class MessageServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def GetMessages(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMessageIDs(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMessage(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -84,6 +106,16 @@ def add_MessageServiceServicer_to_server(servicer, server):
                     servicer.GetMessages,
                     request_deserializer=message__pb2.GetMessagesRequest.FromString,
                     response_serializer=message__pb2.GetMessagesResponse.SerializeToString,
+            ),
+            'GetMessageIDs': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMessageIDs,
+                    request_deserializer=message__pb2.GetMessageIDsRequest.FromString,
+                    response_serializer=message__pb2.GetMessageIDsResponse.SerializeToString,
+            ),
+            'GetMessage': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMessage,
+                    request_deserializer=message__pb2.GetMessageRequest.FromString,
+                    response_serializer=message__pb2.GetMessageResponse.SerializeToString,
             ),
             'RepostMessage': grpc.unary_unary_rpc_method_handler(
                     servicer.RepostMessage,
@@ -145,6 +177,60 @@ class MessageService(object):
             '/tweety.MessageService/GetMessages',
             message__pb2.GetMessagesRequest.SerializeToString,
             message__pb2.GetMessagesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMessageIDs(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/tweety.MessageService/GetMessageIDs',
+            message__pb2.GetMessageIDsRequest.SerializeToString,
+            message__pb2.GetMessageIDsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMessage(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/tweety.MessageService/GetMessage',
+            message__pb2.GetMessageRequest.SerializeToString,
+            message__pb2.GetMessageResponse.FromString,
             options,
             channel_credentials,
             insecure,

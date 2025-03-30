@@ -57,11 +57,27 @@ class MessageRepository:
 
         if err:
             logging.error("Failed to load user posts: {}".format(err))
-            return grpc.StatusCode.INTERNAL
+            return grpc.StatusCode.INTERNAL, None
 
         for message_id in user_messages.message_ids:
             message, err = self.load_message(message_id)
             if err:
                 return None, err
             list.append(message)
+        return list, None
+    
+    def load_message_ids_list(self, username):
+        path = os.path.join("User", username.lower(), "Messages")
+        user_messages, err = load(self.node, path, UserMessages())
+        list = []
+
+        if err == grpc.StatusCode.NOT_FOUND:
+            return list, None
+
+        if err:
+            logging.error("Failed to load user post IDs: {}".format(err))
+            return grpc.StatusCode.INTERNAL, None
+        
+        for message_id in user_messages.message_ids:
+            list.append(message_id)
         return list, None

@@ -7,15 +7,33 @@ import "models.proto";
 service MessageService {
   rpc PostMessage (PostMessageRequest) returns (PostMessageResponse);
   rpc GetMessages (GetMessagesRequest) returns (GetMessagesResponse);
+  rpc GetMessageIDs (GetMessageIDsRequest) returns (GetMessageIDsResponse);
+  rpc GetMessage (GetMessageRequest) returns (GetMessageResponse);
   rpc RepostMessage (RepostMessageRequest) returns (RepostMessageResponse);
 }
 
 message GetMessagesRequest {
-  string user_id = 1; // Optional: Can be used to filter messages
+  string user_id = 1;
 }
 
 message GetMessagesResponse {
   repeated Message messages = 1;
+}
+
+message GetMessageIDsRequest {
+  string user_id = 1;
+}
+
+message GetMessageIDsResponse {
+  repeated string message_ids = 1;
+}
+
+message GetMessageRequest {
+  string message_id = 1;
+}
+
+message GetMessageResponse {
+  Message message = 1;
 }
 
 message PostMessageRequest {

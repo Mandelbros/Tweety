@@ -4,7 +4,7 @@ from concurrent import futures
 import time 
 from datetime import datetime, UTC
 from proto.models_pb2 import Message
-from proto.message_pb2 import PostMessageResponse, GetMessagesResponse, RepostMessageResponse
+from proto.message_pb2 import PostMessageResponse, GetMessagesResponse, RepostMessageResponse, GetMessageIDsResponse, GetMessageResponse
 from proto.message_pb2_grpc import MessageServiceServicer, add_MessageServiceServicer_to_server
 from repository.message import MessageRepository
 from repository.auth import AuthRepository
@@ -26,6 +26,29 @@ class MessageService(MessageServiceServicer):
             context.abort(grpc.StatusCode.INTERNAL, "Failed to load user posts")
 
         return GetMessagesResponse(messages=messages)
+    
+    def GetMessageIDs(self, request, context):
+        user_id = request.user_id
+
+        if not self.auth_repository.load_user(user_id):
+            context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
+
+        message_ids, err = self.message_repository.load_message_ids_list(user_id)
+        
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, "Failed to load user post IDs")
+
+        return GetMessageIDsResponse(message_ids=message_ids)
+    
+    def GetMessage(self, request, context):
+        message_id = request.message_id
+
+        message, err = self.message_repository.load_message(message_id)
+        
+        if err:
+            context.abort(grpc.StatusCode.INTERNAL, "Failed to message")
+
+        return GetMessageResponse(message=message)
 
     def PostMessage(self, request, context):
         user_id = request.user_id

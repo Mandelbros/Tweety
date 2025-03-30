@@ -6,6 +6,9 @@ class FileCache:
     cache_dir = Path("app_cache")
     cache_dir.mkdir(exist_ok=True)
 
+    messages_dir = cache_dir / "messages"  # Subcarpeta para mensajes
+    messages_dir.mkdir(exist_ok=True)
+
     @staticmethod
     def _get_cache_path(key):
         return FileCache.cache_dir / f"{key}.json"
@@ -13,6 +16,8 @@ class FileCache:
     @staticmethod
     async def set(key, data):
         cache_file = FileCache._get_cache_path(key)
+        # Asegurarse de que el directorio padre exista
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
         with open(cache_file, 'w') as f:
             json.dump(data, f)
 
@@ -34,5 +39,5 @@ class FileCache:
     @staticmethod
     async def clear():
         """Clear all cached data"""
-        for cache_file in FileCache.cache_dir.glob("*.json"):
+        for cache_file in FileCache.cache_dir.glob("**/*.json"):  # Limpia recursivamente
             os.remove(cache_file)

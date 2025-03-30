@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from proto import models_pb2 as models__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rmessage.proto\x12\x06tweety\x1a\x0cmodels.proto\"%\n\x12GetMessagesRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\"8\n\x13GetMessagesResponse\x12!\n\x08messages\x18\x01 \x03(\x0b\x32\x0f.tweety.Message\"6\n\x12PostMessageRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\"7\n\x13PostMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"D\n\x14RepostMessageRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x1b\n\x13original_message_id\x18\x02 \x01(\t\"9\n\x15RepostMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t2\xee\x01\n\x0eMessageService\x12\x46\n\x0bPostMessage\x12\x1a.tweety.PostMessageRequest\x1a\x1b.tweety.PostMessageResponse\x12\x46\n\x0bGetMessages\x12\x1a.tweety.GetMessagesRequest\x1a\x1b.tweety.GetMessagesResponse\x12L\n\rRepostMessage\x12\x1c.tweety.RepostMessageRequest\x1a\x1d.tweety.RepostMessageResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rmessage.proto\x12\x06tweety\x1a\x0cmodels.proto\"%\n\x12GetMessagesRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\"8\n\x13GetMessagesResponse\x12!\n\x08messages\x18\x01 \x03(\x0b\x32\x0f.tweety.Message\"\'\n\x14GetMessageIDsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\",\n\x15GetMessageIDsResponse\x12\x13\n\x0bmessage_ids\x18\x01 \x03(\t\"\'\n\x11GetMessageRequest\x12\x12\n\nmessage_id\x18\x01 \x01(\t\"6\n\x12GetMessageResponse\x12 \n\x07message\x18\x01 \x01(\x0b\x32\x0f.tweety.Message\"6\n\x12PostMessageRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\"7\n\x13PostMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"D\n\x14RepostMessageRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x1b\n\x13original_message_id\x18\x02 \x01(\t\"9\n\x15RepostMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t2\x81\x03\n\x0eMessageService\x12\x46\n\x0bPostMessage\x12\x1a.tweety.PostMessageRequest\x1a\x1b.tweety.PostMessageResponse\x12\x46\n\x0bGetMessages\x12\x1a.tweety.GetMessagesRequest\x1a\x1b.tweety.GetMessagesResponse\x12L\n\rGetMessageIDs\x12\x1c.tweety.GetMessageIDsRequest\x1a\x1d.tweety.GetMessageIDsResponse\x12\x43\n\nGetMessage\x12\x19.tweety.GetMessageRequest\x1a\x1a.tweety.GetMessageResponse\x12L\n\rRepostMessage\x12\x1c.tweety.RepostMessageRequest\x1a\x1d.tweety.RepostMessageResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,14 +36,22 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GETMESSAGESREQUEST']._serialized_end=76
   _globals['_GETMESSAGESRESPONSE']._serialized_start=78
   _globals['_GETMESSAGESRESPONSE']._serialized_end=134
-  _globals['_POSTMESSAGEREQUEST']._serialized_start=136
-  _globals['_POSTMESSAGEREQUEST']._serialized_end=190
-  _globals['_POSTMESSAGERESPONSE']._serialized_start=192
-  _globals['_POSTMESSAGERESPONSE']._serialized_end=247
-  _globals['_REPOSTMESSAGEREQUEST']._serialized_start=249
-  _globals['_REPOSTMESSAGEREQUEST']._serialized_end=317
-  _globals['_REPOSTMESSAGERESPONSE']._serialized_start=319
-  _globals['_REPOSTMESSAGERESPONSE']._serialized_end=376
-  _globals['_MESSAGESERVICE']._serialized_start=379
-  _globals['_MESSAGESERVICE']._serialized_end=617
+  _globals['_GETMESSAGEIDSREQUEST']._serialized_start=136
+  _globals['_GETMESSAGEIDSREQUEST']._serialized_end=175
+  _globals['_GETMESSAGEIDSRESPONSE']._serialized_start=177
+  _globals['_GETMESSAGEIDSRESPONSE']._serialized_end=221
+  _globals['_GETMESSAGEREQUEST']._serialized_start=223
+  _globals['_GETMESSAGEREQUEST']._serialized_end=262
+  _globals['_GETMESSAGERESPONSE']._serialized_start=264
+  _globals['_GETMESSAGERESPONSE']._serialized_end=318
+  _globals['_POSTMESSAGEREQUEST']._serialized_start=320
+  _globals['_POSTMESSAGEREQUEST']._serialized_end=374
+  _globals['_POSTMESSAGERESPONSE']._serialized_start=376
+  _globals['_POSTMESSAGERESPONSE']._serialized_end=431
+  _globals['_REPOSTMESSAGEREQUEST']._serialized_start=433
+  _globals['_REPOSTMESSAGEREQUEST']._serialized_end=501
+  _globals['_REPOSTMESSAGERESPONSE']._serialized_start=503
+  _globals['_REPOSTMESSAGERESPONSE']._serialized_end=560
+  _globals['_MESSAGESERVICE']._serialized_start=563
+  _globals['_MESSAGESERVICE']._serialized_end=948
 # @@protoc_insertion_point(module_scope)
