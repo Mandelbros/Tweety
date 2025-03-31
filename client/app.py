@@ -7,6 +7,9 @@ from services.auth_client import register, login
 from services.social_graph_client import follow_user, unfollow_user, get_followers, get_following
 from services.message_client import post_message, repost_message, get_messages, get_message_ids, get_message
 from config import SEPARATOR
+from discoverer import maybe_start_background_check
+
+maybe_start_background_check()
 
 MIN_USERNAME_LENGTH = 3
 MAX_USERNAME_LENGTH = 40

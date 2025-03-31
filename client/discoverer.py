@@ -1,10 +1,10 @@
+import socket, logging, grpc, struct, threading, time
 import streamlit as st
-import socket, logging
-import grpc
-import struct
-from config import MULTICAST_GROUP, MULTICAST_PORT, TIMEOUT, ARE_YOU, YES_IM, SEPARATOR, EMPTY
+from config import MULTICAST_GROUP, MULTICAST_PORT, TIMEOUT, ARE_YOU, YES_IM, SEPARATOR, EMPTY, AUTH
 
 MESSAGE = f"{ARE_YOU}{SEPARATOR}0".encode()
+GLOBAL_SERVER = None
+GLOBAL_BG_CHECK_STARTED = False
 
 logging.basicConfig(level=logging.INFO)  # Set the log level to INFO
 
@@ -50,15 +50,19 @@ def update_server():
     This function discovers a new server and updates the session state with the new server information.
     If no server is found, it logs an info message and removes the server from the session state if it exists.
     """
-    server = discover()
-    if server:
-        logging.info(f"Discoverer encontró {server}")
-        st.session_state['server'] = server[1]
+    global GLOBAL_SERVER
+    server_info = discover()
+    if server_info:
+        logging.info(f"Discoverer encontró {server_info}")
+        
+        st.session_state['server'] = server_info[1]
+        GLOBAL_SERVER = server_info[1]
     else:
         logging.info("Ningún servidor encontrado")
 
         if st.session_state.get('server'):
             del st.session_state['server']
+        GLOBAL_SERVER = None
 
 def is_alive(host, port, timeout=10):
     """
@@ -202,3 +206,32 @@ class AuthInterceptor(grpc.UnaryUnaryClientInterceptor, grpc.UnaryStreamClientIn
         metadata = list(metadata) + [('authorization', self.token)]
         client_call_details = client_call_details._replace(metadata=metadata)
         return continuation(client_call_details, request)
+
+def update_server_bg():
+    global GLOBAL_SERVER
+    server_info = discover()
+    if server_info:
+        logging.info(f"Discoverer found {server_info} (background)")
+        # Update only the global variable
+        GLOBAL_SERVER = server_info[1]
+    else:
+        logging.info("No server found (background)")
+        GLOBAL_SERVER = None
+
+def periodic_server_check(interval=20):
+    """
+    Periodically checks if the currently stored server is alive.
+    This function now uses the global variable (GLOBAL_SERVER) instead of st.session_state.
+    """
+    global GLOBAL_SERVER
+    while True:
+        if not GLOBAL_SERVER or not is_alive(GLOBAL_SERVER, int(AUTH)):
+            logging.info("Current server not alive. Updating server information (background)...")
+            update_server_bg()
+        time.sleep(interval)
+
+def maybe_start_background_check():
+    global GLOBAL_BG_CHECK_STARTED
+    if not GLOBAL_BG_CHECK_STARTED:
+        threading.Thread(target=periodic_server_check, args=(20,), daemon=True).start()
+        GLOBAL_BG_CHECK_STARTED = True
