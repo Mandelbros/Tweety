@@ -5,10 +5,12 @@ services:
   server1:
     image: server:latest
     container_name: server1
-    privileged: true  
+    privileged: true
+    environment:
+      - NETWORK_TYPE=clients
     networks:
-      servers:
-        ipv4_address: 10.0.11.10
+      clients:
+        ipv4_address: 10.0.10.10
     ports:
       - "5001:5001"
     restart: on-failure
@@ -16,7 +18,9 @@ services:
   server2:
     image: server:latest
     container_name: server2
-    privileged: true  
+    privileged: true
+    environment:
+      - NETWORK_TYPE=servers
     networks:
       servers:
         ipv4_address: 10.0.11.11
@@ -27,7 +31,9 @@ services:
   server3:
     image: server:latest
     container_name: server3
-    privileged: true  
+    privileged: true
+    environment:
+      - NETWORK_TYPE=servers
     networks:
       servers:
         ipv4_address: 10.0.11.12
@@ -39,9 +45,11 @@ services:
   client1:
     image: client:latest
     container_name: client1
-    privileged: true  
+    privileged: true
+    environment:
+      - NETWORK_TYPE=servers
     networks:
-      clients: {}
+      servers: {}
     ports:
       - "8501:8501"
     restart: on-failure
@@ -49,7 +57,9 @@ services:
   client2:
     image: client:latest
     container_name: client2
-    privileged: true  
+    privileged: true
+    environment:
+      - NETWORK_TYPE=clients
     networks:
       clients: {}
     ports:
@@ -59,7 +69,9 @@ services:
   client3:
     image: client:latest
     container_name: client3
-    privileged: true  
+    privileged: true
+    environment:
+      - NETWORK_TYPE=clients
     networks:
       clients: {}
     ports:

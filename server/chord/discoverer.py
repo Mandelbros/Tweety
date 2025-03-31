@@ -275,7 +275,7 @@ class Discoverer:
 
         if not error and node_ip != EMPTY:
             # If a node and leader are found, try joining the ring
-            if not self.join(node_ip, leader_ip):
+            if not self.join(leader_ip, leader_ip):
                 self.create_ring()
             return 
         
@@ -310,8 +310,8 @@ class Discoverer:
                     else:
                         leader = NodeRef(leader_ip)
                         if leader.id > self.node.id:
-                            if not self.join(node_ip, leader_ip):
-                                logging.error(f'Error uniendo nodo {node_ip}')
+                            if not self.join(leader_ip, leader_ip):
+                                logging.error(f'Error uniendo nodo {leader_ip}')
             except Exception as e:
                 logging.error(f'Error en proceso de descubrimiento y unión: {e}')
 
